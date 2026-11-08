@@ -1,5 +1,14 @@
 import { Call, Events } from '@wailsio/runtime';
 
+export interface UserConfig {
+  download_dir: string;
+  relay_address: string;
+  relay_password: string;
+  only_local: boolean;
+  overwrite: boolean;
+  auto_copy_code: boolean;
+}
+
 export interface BackendService {
   PickFile: () => Promise<string>;
   PickFolder: () => Promise<string>;
@@ -12,6 +21,9 @@ export interface BackendService {
   SetDownloadDir: (path: string) => Promise<void>;
   PickDownloadDir: () => Promise<string>;
   ResetDownloadDir: () => Promise<string>;
+  GetConfig: () => Promise<UserConfig>;
+  UpdateConfig: (cfg: UserConfig) => Promise<void>;
+  ResetConfig: () => Promise<UserConfig>;
 }
 
 const SERVICE_FQN = 'croc-interface/backend/service.AppService';
@@ -59,6 +71,18 @@ export const api: BackendService = {
 
   ResetDownloadDir: async (): Promise<string> => {
     return (await Call.ByName(`${SERVICE_FQN}.ResetDownloadDir`)) as string;
+  },
+
+  GetConfig: async (): Promise<UserConfig> => {
+    return (await Call.ByName(`${SERVICE_FQN}.GetConfig`)) as UserConfig;
+  },
+
+  UpdateConfig: async (cfg: UserConfig): Promise<void> => {
+    await Call.ByName(`${SERVICE_FQN}.UpdateConfig`, cfg);
+  },
+
+  ResetConfig: async (): Promise<UserConfig> => {
+    return (await Call.ByName(`${SERVICE_FQN}.ResetConfig`)) as UserConfig;
   },
 };
 

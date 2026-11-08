@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import App from './App';
 
 describe('App Shell', () => {
@@ -16,39 +16,70 @@ describe('App Shell', () => {
     expect(screen.getByText(/drag and drop a file/i)).toBeInTheDocument();
   });
 
-  it('renders and toggles Local LAN switch inside settings', async () => {
+  it('renders and toggles options inside settings modal', async () => {
     render(<App />);
 
     // Wait for initial render to settle
     await screen.findByText(/drag and drop a file/i);
 
-    // Open settings popover
+    // Open settings modal
     const settingsButton = screen.getByRole('button', { name: /settings/i });
-    fireEvent.click(settingsButton);
+    await act(async () => {
+      fireEvent.click(settingsButton);
+    });
 
+    expect(screen.getByText(/preferences & options/i)).toBeInTheDocument();
+
+    // Local LAN toggle
     const lanToggle = screen.getByRole('switch', { name: /local lan only/i });
     expect(lanToggle).toBeInTheDocument();
     expect(lanToggle).toHaveAttribute('aria-checked', 'false');
-
-    fireEvent.click(lanToggle);
+    await act(async () => {
+      fireEvent.click(lanToggle);
+    });
     expect(lanToggle).toHaveAttribute('aria-checked', 'true');
+
+    // Overwrite files toggle
+    const overwriteToggle = screen.getByRole('switch', { name: /overwrite existing files/i });
+    expect(overwriteToggle).toBeInTheDocument();
+    expect(overwriteToggle).toHaveAttribute('aria-checked', 'false');
+    await act(async () => {
+      fireEvent.click(overwriteToggle);
+    });
+    expect(overwriteToggle).toHaveAttribute('aria-checked', 'true');
+
+    // Custom relay toggle
+    const relayToggle = screen.getByRole('switch', { name: /custom relay server/i });
+    expect(relayToggle).toBeInTheDocument();
+    expect(relayToggle).toHaveAttribute('aria-checked', 'false');
+    await act(async () => {
+      fireEvent.click(relayToggle);
+    });
+    expect(relayToggle).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByPlaceholderText(/relay\.example\.com/i)).toBeInTheDocument();
   });
 
   it('displays and allows changing download directory in settings', async () => {
     render(<App />);
 
     const settingsButton = screen.getByRole('button', { name: /settings/i });
-    fireEvent.click(settingsButton);
+    await act(async () => {
+      fireEvent.click(settingsButton);
+    });
 
-    expect(screen.getByText(/save location/i)).toBeInTheDocument();
-    const changeButton = screen.getByRole('button', { name: /change/i });
-    expect(changeButton).toBeInTheDocument();
+    expect(screen.getByText(/default download folder/i)).toBeInTheDocument();
+    const browseButton = screen.getByRole('button', { name: /browse/i });
+    expect(browseButton).toBeInTheDocument();
 
-    fireEvent.click(changeButton);
+    await act(async () => {
+      fireEvent.click(browseButton);
+    });
     expect(await screen.findByText('/home/user/CustomFolder')).toBeInTheDocument();
 
-    const resetButton = screen.getByRole('button', { name: /reset/i });
-    fireEvent.click(resetButton);
+    const resetButton = screen.getByRole('button', { name: /reset to defaults/i });
+    await act(async () => {
+      fireEvent.click(resetButton);
+    });
     expect(await screen.findByText('/home/user/Downloads')).toBeInTheDocument();
   });
 });

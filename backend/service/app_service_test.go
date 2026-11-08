@@ -121,3 +121,52 @@ func TestPickDownloadDirWithoutApp(t *testing.T) {
 	}
 }
 
+func TestConfigLifecycle(t *testing.T) {
+	svc := NewAppService()
+
+	cfg, err := svc.GetConfig()
+	if err != nil {
+		t.Fatalf("failed to get config: %v", err)
+	}
+	if cfg.DownloadDir == "" {
+		t.Fatal("expected non-empty default download dir in config")
+	}
+
+	tempDir := t.TempDir()
+	newCfg := UserConfig{
+		DownloadDir:   tempDir,
+		RelayAddress:  "myrelay.internal:9009",
+		RelayPassword: "secret-relay-pass",
+		OnlyLocal:     true,
+		Overwrite:     true,
+		AutoCopyCode:  true,
+	}
+
+	err = svc.UpdateConfig(newCfg)
+	if err != nil {
+		t.Fatalf("failed to update config: %v", err)
+	}
+
+	retrieved, err := svc.GetConfig()
+	if err != nil {
+		t.Fatalf("failed to get updated config: %v", err)
+	}
+	if retrieved.DownloadDir != tempDir ||
+		retrieved.RelayAddress != "myrelay.internal:9009" ||
+		retrieved.RelayPassword != "secret-relay-pass" ||
+		!retrieved.OnlyLocal ||
+		!retrieved.Overwrite {
+		t.Fatalf("updated config does not match expected: %+v", retrieved)
+	}
+
+	// Reset config
+	resetCfg, err := svc.ResetConfig()
+	if err != nil {
+		t.Fatalf("failed to reset config: %v", err)
+	}
+	if resetCfg.RelayAddress != "" || resetCfg.OnlyLocal != false || resetCfg.Overwrite != false {
+		t.Fatalf("expected reset config to have defaults, got: %+v", resetCfg)
+	}
+}
+
+

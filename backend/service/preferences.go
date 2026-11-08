@@ -8,9 +8,14 @@ import (
 	"sync"
 )
 
-// UserConfig holds persistent application preferences.
+// UserConfig holds persistent application preferences for both frontend and backend.
 type UserConfig struct {
-	DownloadDir string `json:"download_dir"`
+	DownloadDir   string `json:"download_dir"`
+	RelayAddress  string `json:"relay_address"`
+	RelayPassword string `json:"relay_password"`
+	OnlyLocal     bool   `json:"only_local"`
+	Overwrite     bool   `json:"overwrite"`
+	AutoCopyCode  bool   `json:"auto_copy_code"`
 }
 
 // PreferencesManager handles persistent user settings stored on disk.
@@ -33,6 +38,9 @@ func NewPreferencesManager() *PreferencesManager {
 
 	pm := &PreferencesManager{
 		configPath: configPath,
+		config: UserConfig{
+			AutoCopyCode: true,
+		},
 	}
 	pm.load()
 	return pm
@@ -42,6 +50,9 @@ func NewPreferencesManager() *PreferencesManager {
 func NewPreferencesManagerWithPath(path string) *PreferencesManager {
 	pm := &PreferencesManager{
 		configPath: path,
+		config: UserConfig{
+			AutoCopyCode: true,
+		},
 	}
 	pm.load()
 	return pm
@@ -66,19 +77,65 @@ func (pm *PreferencesManager) save() error {
 	return os.WriteFile(pm.configPath, data, 0o644)
 }
 
-// GetDownloadDir returns the configured download directory, or defaults to ~/Downloads.
-func (pm *PreferencesManager) GetDownloadDir() (string, error) {
+// GetConfig returns the current user configuration, populating sensible defaults where missing.
+func (pm *PreferencesManager) GetConfig() UserConfig {
 	pm.mu.RLock()
-	customDir := pm.config.DownloadDir
+	cfg := pm.config
 	pm.mu.RUnlock()
 
-	if customDir != "" {
-		info, err := os.Stat(customDir)
-		if err == nil && info.IsDir() {
-			return customDir, nil
+	if cfg.DownloadDir != "" {
+		if info, err := os.Stat(cfg.DownloadDir); err != nil || !info.IsDir() {
+			cfg.DownloadDir, _ = GetDefaultDownloadDir()
+		}
+	} else {
+		cfg.DownloadDir, _ = GetDefaultDownloadDir()
+	}
+
+	return cfg
+}
+
+// UpdateConfig validates and persists changes to user preferences.
+func (pm *PreferencesManager) UpdateConfig(cfg UserConfig) error {
+	if cfg.DownloadDir != "" {
+		info, err := os.Stat(cfg.DownloadDir)
+		if err != nil {
+			return fmt.Errorf("download directory does not exist: %w", err)
+		}
+		if !info.IsDir() {
+			return fmt.Errorf("download path is not a directory: %s", cfg.DownloadDir)
 		}
 	}
-	return GetDefaultDownloadDir()
+
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+
+	pm.config = cfg
+	return pm.save()
+}
+
+// ResetConfig restores all settings to default and saves to disk.
+func (pm *PreferencesManager) ResetConfig() (UserConfig, error) {
+	defaultDir, err := GetDefaultDownloadDir()
+	if err != nil {
+		defaultDir = ""
+	}
+
+	pm.mu.Lock()
+	pm.config = UserConfig{
+		DownloadDir:  defaultDir,
+		AutoCopyCode: true,
+	}
+	saveErr := pm.save()
+	cfg := pm.config
+	pm.mu.Unlock()
+
+	return cfg, saveErr
+}
+
+// GetDownloadDir returns the configured download directory, or defaults to ~/Downloads.
+func (pm *PreferencesManager) GetDownloadDir() (string, error) {
+	cfg := pm.GetConfig()
+	return cfg.DownloadDir, nil
 }
 
 // SetDownloadDir sets and persists a custom download folder.
@@ -100,10 +157,15 @@ func (pm *PreferencesManager) SetDownloadDir(dir string) error {
 
 // ResetDownloadDir resets the download folder to default ~/Downloads.
 func (pm *PreferencesManager) ResetDownloadDir() (string, error) {
+	defaultDir, err := GetDefaultDownloadDir()
+	if err != nil {
+		return "", err
+	}
+
 	pm.mu.Lock()
 	pm.config.DownloadDir = ""
 	_ = pm.save()
 	pm.mu.Unlock()
 
-	return GetDefaultDownloadDir()
+	return defaultDir, nil
 }

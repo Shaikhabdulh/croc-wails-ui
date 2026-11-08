@@ -2,13 +2,23 @@ import { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { SendView } from './components/SendView';
 import { ReceiveView } from './components/ReceiveView';
+import { SettingsModal } from './components/SettingsModal';
 import { useTransfer } from './hooks/useTransfer';
-import { api, subscribeToEvent } from './api';
+import { api, subscribeToEvent, UserConfig } from './api';
+
+const DEFAULT_CONFIG: UserConfig = {
+  download_dir: '',
+  relay_address: '',
+  relay_password: '',
+  only_local: false,
+  overwrite: false,
+  auto_copy_code: true,
+};
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'send' | 'receive'>('send');
-  const [isLocalOnly, setIsLocalOnly] = useState<boolean>(false);
-  const [downloadDir, setDownloadDir] = useState<string>('');
+  const [config, setConfig] = useState<UserConfig>(DEFAULT_CONFIG);
+  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
 
   const {
     state,
@@ -30,49 +40,67 @@ export default function App() {
     state === 'transferring';
 
   useEffect(() => {
-    // Load default or configured download directory
-    api.GetDownloadDir()
-      .then((dir) => setDownloadDir(dir))
+    // Load full user preferences on startup
+    api.GetConfig()
+      .then((cfg) => setConfig(cfg))
       .catch(() => {});
   }, []);
+
+  // Auto-copy code phrase to clipboard if enabled in settings
+  useEffect(() => {
+    if (codePhrase && state === 'waiting' && config.auto_copy_code) {
+      navigator.clipboard?.writeText(codePhrase).catch(() => {});
+    }
+  }, [codePhrase, state, config.auto_copy_code]);
 
   useEffect(() => {
     // Listen for native OS file drops onto the window
     const unsub = subscribeToEvent<string[]>('files:dropped', (paths) => {
       if (paths && paths.length > 0 && !isTransferActive) {
         setActiveTab('send');
-        send(paths[0], isLocalOnly).catch(() => {});
+        send(paths[0], config.only_local).catch(() => {});
       }
     });
 
     return () => unsub();
-  }, [isTransferActive, isLocalOnly, send]);
+  }, [isTransferActive, config.only_local, send]);
 
   const handleSend = async (path: string): Promise<string> => {
-    return await send(path, isLocalOnly);
+    return await send(path, config.only_local);
   };
 
   const handleReceive = async (code: string): Promise<void> => {
-    await receive(code, isLocalOnly);
+    await receive(code, config.only_local);
   };
 
-  const handlePickDownloadDir = async (): Promise<void> => {
+  const handleUpdateConfig = async (newCfg: UserConfig): Promise<void> => {
+    try {
+      await api.UpdateConfig(newCfg);
+      setConfig(newCfg);
+    } catch {
+      // update failed
+    }
+  };
+
+  const handlePickDownloadDir = async (): Promise<string> => {
     try {
       const selected = await api.PickDownloadDir();
       if (selected) {
-        setDownloadDir(selected);
+        setConfig((prev) => ({ ...prev, download_dir: selected }));
+        return selected;
       }
     } catch {
       // dialog cancelled or error
     }
+    return '';
   };
 
-  const handleResetDownloadDir = async (): Promise<void> => {
+  const handleResetConfig = async (): Promise<void> => {
     try {
-      const defaultDir = await api.ResetDownloadDir();
-      setDownloadDir(defaultDir);
+      const reset = await api.ResetConfig();
+      setConfig(reset);
     } catch {
-      // error
+      // reset failed
     }
   };
 
@@ -84,11 +112,8 @@ export default function App() {
       <Header
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        isLocalOnly={isLocalOnly}
-        onLocalOnlyChange={setIsLocalOnly}
-        downloadDir={downloadDir}
-        onPickDownloadDir={handlePickDownloadDir}
-        onResetDownloadDir={handleResetDownloadDir}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        isLocalOnly={config.only_local}
         isTransferActive={isTransferActive}
       />
 
@@ -109,8 +134,10 @@ export default function App() {
             state={state}
             progress={progress}
             codePhrase={codePhrase}
-            downloadDir={downloadDir}
-            onChangeDownloadDir={handlePickDownloadDir}
+            downloadDir={config.download_dir}
+            onChangeDownloadDir={async () => {
+              await handlePickDownloadDir();
+            }}
             error={error}
             onReceive={handleReceive}
             onCancel={cancel}
@@ -119,6 +146,15 @@ export default function App() {
           />
         )}
       </main>
+
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        config={config}
+        onUpdateConfig={handleUpdateConfig}
+        onPickFolder={handlePickDownloadDir}
+        onResetConfig={handleResetConfig}
+      />
     </div>
   );
 }

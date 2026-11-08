@@ -275,18 +275,54 @@ func (s *AppService) PickDownloadDir() (string, error) {
 	return selected, nil
 }
 
+// GetConfig retrieves the current user configuration for both FE and BE.
+func (s *AppService) GetConfig() (UserConfig, error) {
+	if s.prefs == nil {
+		s.prefs = NewPreferencesManager()
+	}
+	return s.prefs.GetConfig(), nil
+}
+
+// UpdateConfig persists changes to the user configuration.
+func (s *AppService) UpdateConfig(cfg UserConfig) error {
+	if s.prefs == nil {
+		s.prefs = NewPreferencesManager()
+	}
+	return s.prefs.UpdateConfig(cfg)
+}
+
+// ResetConfig resets all configuration settings to default.
+func (s *AppService) ResetConfig() (UserConfig, error) {
+	if s.prefs == nil {
+		s.prefs = NewPreferencesManager()
+	}
+	return s.prefs.ResetConfig()
+}
+
 func (s *AppService) buildOptions(code string, isSender bool, isLocalOnly bool) croc.Options {
+	cfg := s.prefs.GetConfig()
+	relayAddr := cfg.RelayAddress
+	if relayAddr == "" {
+		relayAddr = models.DEFAULT_RELAY
+	}
+	relayPass := cfg.RelayPassword
+	if relayPass == "" {
+		relayPass = models.DEFAULT_PASSPHRASE
+	}
+	onlyLocal := isLocalOnly || cfg.OnlyLocal
+
 	return croc.Options{
 		IsSender:         isSender,
 		SharedSecret:     code,
 		RelayPorts:       []string{"9009", "9010", "9011", "9012"},
-		RelayPassword:    models.DEFAULT_PASSPHRASE,
-		RelayAddress:     models.DEFAULT_RELAY,
+		RelayPassword:    relayPass,
+		RelayAddress:     relayAddr,
 		RelayAddress6:    models.DEFAULT_RELAY6,
 		Curve:            "p256",
 		HashAlgorithm:    "xxhash",
-		OnlyLocal:        isLocalOnly,
+		OnlyLocal:        onlyLocal,
 		DisableLocal:     false,
+		Overwrite:        cfg.Overwrite,
 		NoPrompt:         true,
 		DisableClipboard: true,
 		DisableTailcat:   true,

@@ -25,6 +25,26 @@ vi.mock('@wailsio/runtime', () => ({
       if (methodName.endsWith('.ResetDownloadDir')) {
         return Promise.resolve('/home/user/Downloads');
       }
+      if (methodName.endsWith('.GetConfig')) {
+        return Promise.resolve({
+          download_dir: '/home/user/Downloads',
+          relay_address: '',
+          relay_password: '',
+          only_local: false,
+          overwrite: false,
+          auto_copy_code: true,
+        });
+      }
+      if (methodName.endsWith('.ResetConfig')) {
+        return Promise.resolve({
+          download_dir: '/home/user/Downloads',
+          relay_address: '',
+          relay_password: '',
+          only_local: false,
+          overwrite: false,
+          auto_copy_code: true,
+        });
+      }
       return Promise.resolve(undefined);
     }),
     ByID: vi.fn(),
