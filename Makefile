@@ -6,7 +6,7 @@ OUTPUT_BIN := $(OUTPUT_DIR)/$(BINARY_NAME)
 HOST_SPAWN := $(shell command -v host-spawn 2>/dev/null)
 RUN_CMD := $(if $(HOST_SPAWN),$(HOST_SPAWN) bash -c,bash -c)
 
-.PHONY: all build build-frontend test test-go test-frontend clean package-linux package-deb package-appimage package-tar
+.PHONY: all build build-frontend test test-go test-frontend clean package-linux package-deb package-appimage package-tar check-ci check-ci-watch
 
 all: build
 
@@ -37,6 +37,12 @@ test-go:
 test-frontend:
 	@echo "==> Running frontend Vitest suite..."
 	@cd frontend && bun run test
+
+check-ci:
+	@./scripts/check-ci.sh
+
+check-ci-watch:
+	@./scripts/check-ci.sh --watch
 
 clean:
 	@echo "==> Cleaning build artifacts..."
