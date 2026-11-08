@@ -299,13 +299,20 @@ jobs:
           cp mobile/android/app/build/outputs/apk/debug/*.apk build/dist/android/ || true
           ls -la build/dist/android/
 
-      - name: Upload Android Artifacts
+      - name: Package iOS Xcode Project
+        run: |
+          cd mobile
+          bunx cap sync ios || true
+          zip -r ../build/dist/android/croc-wails-ui-ios-xcode-project.zip ios capacitor.config.json
+
+      - name: Upload Mobile Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: croc-wails-ui-android
+          name: croc-wails-ui-mobile
           path: |
             build/dist/android/*.apk
             build/dist/android/croc-daemon-arm64
+            build/dist/android/croc-wails-ui-ios-xcode-project.zip
           retention-days: 1
           if-no-files-found: warn
 

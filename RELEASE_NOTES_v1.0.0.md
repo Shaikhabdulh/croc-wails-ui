@@ -10,6 +10,7 @@ An elegant, modern cross-platform GUI for [croc](https://github.com/schollz/croc
 | :--- | :--- | :--- | :--- |
 | **Android** | `arm64-v8a` / Universal | [`app-debug.apk`](https://github.com/Shaikhabdulh/croc-wails-ui/releases/download/v1.0.0/app-debug.apk) | Native Android Mobile Application |
 | **Android / IoT** | `arm64` | [`croc-daemon-arm64`](https://github.com/Shaikhabdulh/croc-wails-ui/releases/download/v1.0.0/croc-daemon-arm64) | Headless background micro-daemon |
+| **iOS (iPhone/iPad)** | `arm64` / Universal | [`croc-wails-ui-ios-xcode-project.zip`](https://github.com/Shaikhabdulh/croc-wails-ui/releases/download/v1.0.0/croc-wails-ui-ios-xcode-project.zip) | Ready-to-deploy Xcode Workspace (open in Xcode & run on physical iPhone) |
 | **Linux** | `x86_64` (amd64) | [`croc-wails-ui-1.0.0-x86_64.AppImage`](https://github.com/Shaikhabdulh/croc-wails-ui/releases/download/v1.0.0/croc-wails-ui-1.0.0-x86_64.AppImage) | Universal single-file executable (all Linux distros) |
 | **Linux** | `x86_64` (amd64) | [`croc-wails-ui_1.0.0_amd64.deb`](https://github.com/Shaikhabdulh/croc-wails-ui/releases/download/v1.0.0/croc-wails-ui_1.0.0_amd64.deb) | Ubuntu / Debian / Linux Mint installer package |
 | **Linux** | `x86_64` (amd64) | [`croc-wails-ui-1.0.0-linux-amd64.tar.gz`](https://github.com/Shaikhabdulh/croc-wails-ui/releases/download/v1.0.0/croc-wails-ui-1.0.0-linux-amd64.tar.gz) | Standalone tarball with binary & desktop launcher |
@@ -22,6 +23,10 @@ An elegant, modern cross-platform GUI for [croc](https://github.com/schollz/croc
 | **Windows** | `x86` (32-bit legacy) | [`croc-wails-ui-x86.exe`](https://github.com/Shaikhabdulh/croc-wails-ui/releases/download/v1.0.0/croc-wails-ui-x86.exe) | Native Windows 32-bit executable |
 
 ---
+
+### 📱 Mobile Setup Notes
+- **Android**: Install `app-debug.apk` directly on any Android phone (enable "Install unknown apps").
+- **iOS (iPhone/iPad)**: Download `croc-wails-ui-ios-xcode-project.zip`, open `ios/App/App.xcworkspace` in Xcode on Mac, select your free personal Apple ID under Signing & Capabilities, and press Run to install directly on your device.
 
 ### ✨ Key Features
 - **End-to-End Encryption**: PAKE (Password Authenticated Key Exchange) with zero-knowledge secret phrases.
