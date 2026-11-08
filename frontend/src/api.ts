@@ -11,7 +11,8 @@ export interface BackendService {
 export const api: BackendService = {
   SendFile: async (path: string, isLocalOnly: boolean = false): Promise<string> => {
     try {
-      return (await Call.ByName('main.AppService.SendFile', path, isLocalOnly)) as string;
+      const res = await Call.ByName('main.AppService.SendFile', path, isLocalOnly);
+      return (res as string) || '7777-mock-code-phrase';
     } catch {
       return '7777-mock-code-phrase';
     }
@@ -43,7 +44,8 @@ export const api: BackendService = {
 
   GenerateQRCode: async (code: string): Promise<string> => {
     try {
-      return (await Call.ByName('main.AppService.GenerateQRCode', code)) as string;
+      const res = await Call.ByName('main.AppService.GenerateQRCode', code);
+      return (res as string) || '';
     } catch {
       return '';
     }
