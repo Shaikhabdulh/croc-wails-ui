@@ -107,7 +107,7 @@ export default function App() {
   return (
     <div
       data-file-drop-target="true"
-      className="flex h-screen w-screen flex-col bg-gradient-to-b from-slate-50 via-white to-slate-50 text-slate-800 antialiased overflow-hidden"
+      className="flex h-screen w-screen flex-col bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-50/40 via-slate-50 to-slate-100/50 text-slate-800 antialiased overflow-hidden select-none"
     >
       <Header
         activeTab={activeTab}
@@ -117,7 +117,7 @@ export default function App() {
         isTransferActive={isTransferActive}
       />
 
-      <main className="flex-1 overflow-y-auto" data-file-drop-target="true">
+      <main className="flex-1 overflow-y-auto relative" data-file-drop-target="true">
         {activeTab === 'send' ? (
           <SendView
             state={state}
