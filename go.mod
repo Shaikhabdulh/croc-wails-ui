@@ -2,10 +2,15 @@ module croc-interface
 
 go 1.27.0
 
-require github.com/schollz/croc/v11 v11.5.4
+require (
+	github.com/schollz/croc/v11 v11.5.4
+	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
+	github.com/wailsapp/wails/v3 v3.0.0-alpha2.119
+)
 
 require (
 	filippo.io/edwards25519 v1.2.0 // indirect
+	github.com/adrg/xdg v0.5.3 // indirect
 	github.com/akutz/memconn v0.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/coder/websocket v1.8.15 // indirect
@@ -15,11 +20,13 @@ require (
 	github.com/fxamacker/cbor/v2 v2.9.4 // indirect
 	github.com/gaissmai/bart v0.30.0 // indirect
 	github.com/go-json-experiment/json v0.0.0-20260820222146-c27c302e5fc3 // indirect
+	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/godbus/dbus/v5 v5.2.2 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/hdevalence/ed25519consensus v0.2.0 // indirect
+	github.com/jchv/go-winloader v0.0.0-20250406163304-c1995be93bd1 // indirect
 	github.com/jsimonetti/rtnetlink v1.4.2 // indirect
 	github.com/kalafut/imohash v1.1.1 // indirect
 	github.com/klauspost/compress v1.20.1 // indirect
@@ -38,7 +45,6 @@ require (
 	github.com/schollz/pake/v3 v3.2.0 // indirect
 	github.com/schollz/peerdiscovery v1.7.6 // indirect
 	github.com/schollz/progressbar/v3 v3.19.1 // indirect
-	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e // indirect
 	github.com/tailscale/certstore v0.1.1-0.20260409135935-3638fb84b77d // indirect
 	github.com/tailscale/go-winio v0.0.0-20231025203758-c4f33415bf55 // indirect
 	github.com/tailscale/hujson v0.0.0-20260727124030-b80ff77dac4f // indirect
