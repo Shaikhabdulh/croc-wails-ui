@@ -14,7 +14,6 @@ import {
   Folder,
   X,
   ClipboardPaste,
-  Shield,
   FileArchive,
   FileImage,
   FileCode,
@@ -255,7 +254,7 @@ export function SendView({
         qrCodeUrl={qrCodeUrl}
       />
 
-      {/* 1. IDLE STATE - Drop zone & file pickers */}
+      {/* 1. IDLE STATE - Clean Drop Zone */}
       {state === 'idle' && stagedFiles.length === 0 && (
         <div
           data-file-drop-target="true"
@@ -266,28 +265,27 @@ export function SendView({
           className={`group flex w-full max-w-lg cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed p-10 text-center transition-all duration-200 select-none ${
             isDragging
               ? 'border-indigo-500 bg-indigo-50/60 shadow-lg shadow-indigo-500/10 scale-[1.01]'
-              : 'border-slate-300/80 bg-white hover:border-indigo-300 hover:bg-slate-50/40 shadow-xs'
+              : 'border-slate-200 bg-white hover:border-indigo-300 hover:bg-slate-50/30 shadow-xs'
           }`}
         >
-          {/* Layered Hero Icon */}
-          <div className="relative mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/10 via-indigo-500/5 to-purple-500/10 border border-indigo-200/50 shadow-inner group-hover:scale-105 transition-transform duration-200">
-            <div className="absolute -inset-1 rounded-2xl bg-indigo-500/10 blur-sm opacity-50 group-hover:opacity-100 transition-opacity" />
-            <UploadCloud className="h-9 w-9 text-indigo-600 relative z-10" />
+          {/* Crisp Hero Icon */}
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50/80 text-indigo-600 border border-indigo-100 shadow-2xs group-hover:scale-105 transition-transform duration-200">
+            <UploadCloud className="h-8 w-8 text-indigo-600" />
           </div>
 
-          <p className="text-lg font-bold tracking-tight text-slate-800">
-            Drag and drop a file, multiple files, or folder here
+          <p className="text-base font-bold tracking-tight text-slate-800">
+            Drag and drop a file or folder here
           </p>
-          <p className="mt-1 text-xs text-slate-500 max-w-sm">
-            or choose from your computer, or paste clipboard images (Ctrl+V)
+          <p className="mt-1 text-xs text-slate-500">
+            or select from your computer
           </p>
 
-          {/* Unified 3-Button Action Row */}
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-2.5 w-full max-w-md">
+          {/* Simple 2-Button Action Row */}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <button
               type="button"
               onClick={handleBrowseFiles}
-              className="flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600 py-2.5 px-3 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700 active:scale-95 transition"
+              className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 py-2.5 px-5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700 active:scale-95 transition"
             >
               <Files className="h-3.5 w-3.5" />
               Choose Files
@@ -295,28 +293,16 @@ export function SendView({
             <button
               type="button"
               onClick={handleBrowseFolder}
-              className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-300 active:scale-95 transition"
+              className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2.5 px-5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-300 active:scale-95 transition"
             >
               <FolderUp className="h-3.5 w-3.5 text-indigo-500" />
               Choose Folder
             </button>
-            <button
-              type="button"
-              onClick={handlePasteClipboardImage}
-              disabled={isPasting}
-              className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-300 active:scale-95 transition disabled:opacity-50"
-              title="Paste image directly from clipboard"
-            >
-              <ClipboardPaste className="h-3.5 w-3.5 text-indigo-500" />
-              <span>{isPasting ? 'Pasting...' : 'Paste Image'}</span>
-            </button>
           </div>
 
-          {/* Security Footnote Badge */}
-          <div className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1 border border-slate-200/60 text-[11px] font-medium text-slate-500">
-            <Shield className="h-3 w-3 text-emerald-600" />
-            End-to-end encrypted peer-to-peer transfer
-          </div>
+          <p className="mt-4 text-[11px] text-slate-400">
+            Tip: You can also paste clipboard images directly with <kbd className="font-mono font-medium text-slate-500">Ctrl+V</kbd>
+          </p>
         </div>
       )}
 

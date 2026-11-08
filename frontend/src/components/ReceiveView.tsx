@@ -53,16 +53,15 @@ export function ReceiveView({
     <div className="flex h-full flex-col items-center justify-center p-6">
       {state === 'idle' && (
         <div className="flex w-full max-w-md flex-col items-center space-y-6 rounded-3xl bg-white p-8 shadow-sm border border-slate-200/90 text-center">
-          {/* Beacon Hero Icon */}
-          <div className="relative inline-flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/10 via-indigo-500/5 to-cyan-500/10 border border-indigo-200/50 shadow-inner">
-            <div className="absolute -inset-1 rounded-2xl bg-indigo-500/10 blur-sm opacity-50" />
-            <Download className="h-9 w-9 text-indigo-600 relative z-10" />
+          {/* Crisp Hero Icon */}
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50/80 text-indigo-600 border border-indigo-100 shadow-2xs">
+            <Download className="h-8 w-8 text-indigo-600" />
           </div>
 
-          <div className="space-y-1.5">
-            <h3 className="text-xl font-bold tracking-tight text-slate-900">Receive Files</h3>
-            <p className="text-xs text-slate-500 max-w-xs mx-auto">
-              Enter the code phrase shared by the sender to start downloading
+          <div className="space-y-1">
+            <h3 className="text-lg font-bold tracking-tight text-slate-900">Receive Files</h3>
+            <p className="text-xs text-slate-500">
+              Enter the code phrase to start receiving
             </p>
           </div>
 
