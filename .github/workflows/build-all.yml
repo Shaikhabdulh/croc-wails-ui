@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   # -------------------------------------------------------------
@@ -76,7 +77,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: croc-wails-ui-linux-${{ matrix.arch }}
-          path: build/dist/*
+          path: |
+            build/dist/*.deb
+            build/dist/*.tar.gz
+            build/dist/*.AppImage
+          retention-days: 1
           if-no-files-found: warn
 
   # -------------------------------------------------------------
@@ -135,6 +140,7 @@ jobs:
         with:
           name: croc-wails-ui-windows-${{ matrix.suffix }}
           path: build/dist/*.exe
+          retention-days: 1
 
   # -------------------------------------------------------------
   # 3. macOS (Apple Silicon, Intel & Universal DMG)
@@ -232,6 +238,7 @@ jobs:
           path: |
             build/dist/croc-wails-ui-Universal.dmg
             build/dist/croc-wails-ui-macos-Universal.zip
+          retention-days: 1
 
   # -------------------------------------------------------------
   # 4. ANDROID (Debug APK & Mobile Daemon)
@@ -296,7 +303,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: croc-wails-ui-android
-          path: build/dist/android/*
+          path: |
+            build/dist/android/*.apk
+            build/dist/android/croc-daemon-arm64
+          retention-days: 1
           if-no-files-found: warn
 
   # -------------------------------------------------------------
@@ -313,14 +323,34 @@ jobs:
         with:
           path: release-artifacts
 
-      - name: Flatten Artifacts
+      - name: Filter & Flatten Distribution Artifacts
         run: |
           mkdir -p dist-release
-          find release-artifacts -type f -exec cp {} dist-release/ \;
-          ls -la dist-release/
+          find release-artifacts -type f \( \
+            -name "*.deb" -o \
+            -name "*.tar.gz" -o \
+            -name "*.AppImage" -o \
+            -name "*.exe" -o \
+            -name "*.dmg" -o \
+            -name "*.zip" -o \
+            -name "*.apk" -o \
+            -name "croc-daemon-arm64" \
+          \) -exec cp {} dist-release/ \;
+          ls -lh dist-release/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: dist-release/*
           generate_release_notes: true
+
+      - name: Purge Runner Artifact Storage (Free Actions Quota)
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Cleaning up temporary build artifacts to keep Actions storage usage at 0 MB..."
+          gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" --jq '.artifacts[].id' | while read -r id; do
+            [ -n "$id" ] && gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/$id" || true
+          done
+          echo "Artifact cleanup completed."

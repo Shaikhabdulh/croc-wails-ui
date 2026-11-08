@@ -48,6 +48,8 @@ desktop.ini
 .vscode/
 *.swp
 *.swo
+
+downloaded-packages/
 *~
 *.sublime-project
 *.sublime-workspace

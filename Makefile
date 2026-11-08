@@ -45,7 +45,7 @@ check-ci-watch:
 	@./scripts/check-ci.sh --watch
 
 clean-ci:
-	@./scripts/clean-ci.sh
+	@./scripts/clean-ci-history.sh
 
 clean:
 	@echo "==> Cleaning build artifacts..."
