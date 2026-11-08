@@ -17,7 +17,6 @@ import (
 	"github.com/schollz/croc/v11/src/croc"
 	"github.com/schollz/croc/v11/src/models"
 	qrcode "github.com/skip2/go-qrcode"
-	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 // AppService bridges GUI actions to the underlying Croc transfer engine.
@@ -81,26 +80,12 @@ func (s *AppService) PickFile() (string, error) {
 
 // PickFiles displays the native OS file picker allowing selection of multiple files.
 func (s *AppService) PickFiles() ([]string, error) {
-	app := application.Get()
-	if app == nil {
-		return []string{}, nil
-	}
-	dialog := app.Dialog.OpenFile()
-	dialog.CanChooseFiles(true).
-		CanChooseDirectories(false).
-		SetTitle("Select File(s) to Send")
-	return dialog.PromptForMultipleSelection()
+	return s.pickFilesNative()
 }
 
 // PickFolder displays the native OS folder picker and returns the selected directory path.
 func (s *AppService) PickFolder() (string, error) {
-	app := application.Get()
-	if app == nil {
-		return "", nil
-	}
-	dialog := app.Dialog.OpenFile()
-	dialog.CanChooseFiles(false).CanChooseDirectories(true).SetTitle("Select Folder to Send")
-	return dialog.PromptForSingleSelection()
+	return s.pickFolderNative()
 }
 
 // SavePastedImage saves base64-encoded image data from clipboard into a temporary file for sending.
@@ -347,31 +332,7 @@ func (s *AppService) ResetDownloadDir() (string, error) {
 
 // PickDownloadDir prompts the user with a native folder chooser dialog and saves the selection.
 func (s *AppService) PickDownloadDir() (string, error) {
-	app := application.Get()
-	if app == nil {
-		return s.GetDownloadDir()
-	}
-
-	currentDir, _ := s.GetDownloadDir()
-	dialog := app.Dialog.OpenFile()
-	dialog.SetTitle("Select Default Download Folder").
-		CanChooseDirectories(true).
-		CanChooseFiles(false)
-
-	if currentDir != "" {
-		dialog.SetDirectory(currentDir)
-	}
-
-	selected, err := dialog.PromptForSingleSelection()
-	if err != nil || selected == "" {
-		return s.GetDownloadDir()
-	}
-
-	if err := s.SetDownloadDir(selected); err != nil {
-		return "", err
-	}
-
-	return selected, nil
+	return s.pickDownloadDirNative()
 }
 
 // GetConfig retrieves the current user configuration for both FE and BE.

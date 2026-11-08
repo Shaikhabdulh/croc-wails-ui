@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Croc Interface</string>
+    <string name="title_activity_main">Croc Interface</string>
+    <string name="package_name">com.croc.wails.ui</string>
+    <string name="custom_url_scheme">com.croc.wails.ui</string>
+</resources>
