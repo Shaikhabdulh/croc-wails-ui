@@ -61,6 +61,25 @@ describe('SendView Component', () => {
     expect(screen.getByText('7777-test-code')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /copy/i })).toBeInTheDocument();
     expect(screen.getByAltText(/qr code for 7777-test-code/i)).toBeInTheDocument();
+    expect(screen.getByText(/routing via public relay/i)).toBeInTheDocument();
+    expect(screen.getByText('getcroc.com')).toBeInTheDocument();
+  });
+
+  it('displays private relay routing note when configured', () => {
+    render(
+      <SendView
+        state="waiting"
+        progress={{ percentage: 0, speedMBs: 0, etaSeconds: 0, fileName: 'report.pdf', bytesDone: 0, bytesTotal: 1024 }}
+        codePhrase="7777-test-code"
+        qrCodeUrl="data:image/png;base64,fake"
+        relayAddress="custom.relay.lan:9009"
+        onSend={vi.fn()}
+        onCancel={vi.fn()}
+        onReset={vi.fn()}
+      />
+    );
+    expect(screen.getByText(/routing via private relay/i)).toBeInTheDocument();
+    expect(screen.getByText('custom.relay.lan:9009')).toBeInTheDocument();
   });
 
   it('renders progress bar and metrics when transferring', () => {

@@ -1,5 +1,16 @@
 import { useState } from 'react';
-import { ArrowUpRight, Laptop, Server, ChevronDown, ChevronUp, ShieldCheck, Lock, Network, Heart } from 'lucide-react';
+import {
+  ArrowUpRight,
+  Laptop,
+  Server,
+  ChevronDown,
+  ChevronUp,
+  ShieldCheck,
+  Lock,
+  Heart,
+  Wifi,
+  Globe,
+} from 'lucide-react';
 import { formatBytes, formatSeconds } from '../utils/format';
 
 interface ProgressBarProps {
@@ -11,6 +22,8 @@ interface ProgressBarProps {
   bytesTotal: number;
   filesDone?: number;
   filesTotal?: number;
+  relayAddress?: string;
+  isLocalOnly?: boolean;
 }
 
 export function ProgressBar({
@@ -22,13 +35,20 @@ export function ProgressBar({
   bytesTotal,
   filesDone,
   filesTotal,
+  relayAddress,
+  isLocalOnly,
 }: ProgressBarProps) {
   const [showTechnical, setShowTechnical] = useState(false);
   const roundedPct = Math.min(100, Math.max(0, Math.round(percentage)));
 
+  const isLocal = Boolean(isLocalOnly);
+  const isPrivate = !isLocal && Boolean(relayAddress && relayAddress.trim().length > 0);
+  const relayHost = isLocal ? 'Direct Local Network' : isPrivate ? relayAddress! : 'getcroc.com:9009';
+  const relayLabel = isLocal ? 'Direct LAN' : isPrivate ? 'Private Relay' : 'Public Relay';
+
   return (
     <div className="w-full space-y-4">
-      {/* 3-Node Transparent Network Flow: Sender -> Relay -> Receiver */}
+      {/* 3-Node Transparent Network Flow: Sender -> Relay/Direct -> Receiver */}
       <div className="relative flex items-center justify-between rounded-2xl bg-slate-50/90 p-3 border border-slate-200/80 shadow-inner">
         {/* Node 1: Sender */}
         <div className="flex flex-col items-center gap-1 shrink-0">
@@ -42,7 +62,7 @@ export function ProgressBar({
           <span className="text-[10px] font-semibold text-slate-600">Sender</span>
         </div>
 
-        {/* Animated Stream 1: Sender -> Relay */}
+        {/* Animated Stream 1: Sender -> Middle */}
         <div className="flex-1 mx-1.5 flex flex-col items-center">
           <svg className="w-full h-3" preserveAspectRatio="none" viewBox="0 0 100 8">
             <line x1="0" y1="4" x2="100" y2="4" stroke="#CBD5E1" strokeWidth="2" />
@@ -51,27 +71,72 @@ export function ProgressBar({
               y1="4"
               x2="100"
               y2="4"
-              stroke="#6366F1"
+              stroke={isLocal ? '#06B6D4' : '#6366F1'}
               strokeWidth="2"
               strokeDasharray="4 6"
               className="animate-flow-dash"
             />
           </svg>
-          <span className="text-[9px] font-mono text-indigo-500 font-medium">encrypted</span>
+          <span
+            className={`text-[9px] font-mono font-medium ${
+              isLocal ? 'text-cyan-600' : 'text-indigo-500'
+            }`}
+          >
+            {isLocal ? 'p2p-direct' : 'encrypted'}
+          </span>
         </div>
 
-        {/* Node 2: Transparent Relay Server */}
+        {/* Node 2: Transparent Relay Server / Direct LAN */}
         <div className="flex flex-col items-center gap-1 shrink-0">
-          <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-violet-50 border border-violet-200 text-violet-600 shadow-2xs" title="Relay Server: Blind Rendezvous (Zero payload access)">
-            <Server className="h-4.5 w-4.5" />
-            <span className="absolute -bottom-1 flex items-center justify-center bg-white rounded-full p-0.5 border border-violet-200 shadow-2xs">
-              <Lock className="h-2 w-2 text-violet-600" />
+          <div
+            className={`relative flex h-9 w-9 items-center justify-center rounded-xl shadow-2xs ${
+              isLocal
+                ? 'bg-cyan-50 border border-cyan-200 text-cyan-600'
+                : isPrivate
+                ? 'bg-violet-50 border border-violet-200 text-violet-600'
+                : 'bg-sky-50 border border-sky-200 text-sky-600'
+            }`}
+            title={
+              isLocal
+                ? 'Direct Local P2P: No external relay (Air-Gapped)'
+                : isPrivate
+                ? `Private Relay: ${relayAddress} (Zero-knowledge stream forwarder)`
+                : 'Public Relay: getcroc.com:9009 (Zero payload access)'
+            }
+          >
+            {isLocal ? (
+              <Wifi className="h-4.5 w-4.5" />
+            ) : isPrivate ? (
+              <Server className="h-4.5 w-4.5" />
+            ) : (
+              <Globe className="h-4.5 w-4.5" />
+            )}
+            <span
+              className={`absolute -bottom-1 flex items-center justify-center bg-white rounded-full p-0.5 border shadow-2xs ${
+                isLocal
+                  ? 'border-cyan-200 text-cyan-600'
+                  : isPrivate
+                  ? 'border-violet-200 text-violet-600'
+                  : 'border-sky-200 text-sky-600'
+              }`}
+            >
+              {isLocal ? <ShieldCheck className="h-2 w-2" /> : <Lock className="h-2 w-2" />}
             </span>
           </div>
-          <span className="text-[10px] font-semibold text-violet-700">Relay</span>
+          <span
+            className={`text-[10px] font-semibold ${
+              isLocal
+                ? 'text-cyan-700'
+                : isPrivate
+                ? 'text-violet-700'
+                : 'text-sky-700'
+            }`}
+          >
+            {relayLabel}
+          </span>
         </div>
 
-        {/* Animated Stream 2: Relay -> Receiver */}
+        {/* Animated Stream 2: Middle -> Receiver */}
         <div className="flex-1 mx-1.5 flex flex-col items-center">
           <svg className="w-full h-3" preserveAspectRatio="none" viewBox="0 0 100 8">
             <line x1="0" y1="4" x2="100" y2="4" stroke="#CBD5E1" strokeWidth="2" />
@@ -86,7 +151,9 @@ export function ProgressBar({
               className="animate-flow-dash"
             />
           </svg>
-          <span className="text-[9px] font-mono text-emerald-600 font-medium">encrypted</span>
+          <span className="text-[9px] font-mono text-emerald-600 font-medium">
+            {isLocal ? 'p2p-direct' : 'encrypted'}
+          </span>
         </div>
 
         {/* Node 3: Receiver */}
@@ -168,9 +235,21 @@ export function ProgressBar({
           <div className="mt-2 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-3 space-y-2 text-left animate-in fade-in duration-150">
             <div className="grid grid-cols-2 gap-2 text-[11px]">
               <div className="space-y-0.5">
-                <span className="text-slate-400 block">Protocol Handshake</span>
+                <span className="text-slate-400 block">Routing Mode</span>
                 <span className="font-mono font-semibold text-slate-800 flex items-center gap-1">
-                  <ShieldCheck className="h-3 w-3 text-emerald-600" /> SPAKE2 PAKE
+                  {isLocal ? (
+                    <>
+                      <Wifi className="h-3 w-3 text-cyan-600" /> Direct LAN (Air-Gapped)
+                    </>
+                  ) : isPrivate ? (
+                    <>
+                      <Server className="h-3 w-3 text-violet-600" /> Private Relay
+                    </>
+                  ) : (
+                    <>
+                      <Globe className="h-3 w-3 text-sky-600" /> Public Relay
+                    </>
+                  )}
                 </span>
               </div>
               <div className="space-y-0.5">
@@ -180,23 +259,38 @@ export function ProgressBar({
                 </span>
               </div>
               <div className="space-y-0.5">
-                <span className="text-slate-400 block">Relay Privacy</span>
-                <span className="font-mono font-semibold text-slate-800 flex items-center gap-1">
-                  <Server className="h-3 w-3 text-violet-600" /> Blind In-Memory Relay
+                <span className="text-slate-400 block">Relay Endpoint</span>
+                <span className="font-mono font-semibold text-slate-800 flex items-center gap-1 truncate" title={relayHost}>
+                  {isLocal ? (
+                    <>
+                      <ShieldCheck className="h-3 w-3 text-cyan-600 shrink-0" />
+                      <span className="truncate">Local Multicast</span>
+                    </>
+                  ) : isPrivate ? (
+                    <>
+                      <Server className="h-3 w-3 text-violet-600 shrink-0" />
+                      <span className="truncate">{relayAddress}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Globe className="h-3 w-3 text-sky-600 shrink-0" />
+                      <span className="truncate">getcroc.com:9009</span>
+                    </>
+                  )}
                 </span>
               </div>
               <div className="space-y-0.5">
-                <span className="text-slate-400 block">Transport Sockets</span>
+                <span className="text-slate-400 block">Handshake Security</span>
                 <span className="font-mono font-semibold text-slate-800 flex items-center gap-1">
-                  <Network className="h-3 w-3 text-indigo-600" /> 4 Multi-Streams
+                  <ShieldCheck className="h-3 w-3 text-emerald-600" /> SPAKE2 PAKE
                 </span>
               </div>
             </div>
 
             <div className="pt-2 border-t border-slate-200/60 text-[10px] text-slate-500 space-y-1">
               <div className="flex items-center justify-between">
-                <span>Verification: <strong>Per-chunk SHA-256 rolling hash</strong></span>
-                <span>Compression: <strong>Snappy / Zstandard</strong></span>
+                <span>Relay Privacy: <strong>{isLocal ? 'Air-gapped (No relay)' : 'Blind in-memory stream'}</strong></span>
+                <span>Verification: <strong>SHA-256 rolling</strong></span>
               </div>
               <div className="flex items-center gap-1 text-slate-600 pt-0.5">
                 <Heart className="h-3 w-3 text-rose-500 fill-rose-500 shrink-0" />

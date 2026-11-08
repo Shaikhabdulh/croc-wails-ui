@@ -17,6 +17,40 @@ describe('ReceiveView Component', () => {
     );
     expect(screen.getByPlaceholderText(/paste code phrase/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /receive/i })).toBeInTheDocument();
+    expect(screen.getByText(/mode: public relay/i)).toBeInTheDocument();
+  });
+
+  it('renders private relay routing badge when relayAddress is configured', () => {
+    render(
+      <ReceiveView
+        state="idle"
+        progress={{ percentage: 0, speedMBs: 0, etaSeconds: 0, fileName: '', bytesDone: 0, bytesTotal: 0 }}
+        codePhrase=""
+        relayAddress="my-node.network:9009"
+        onReceive={vi.fn()}
+        onCancel={vi.fn()}
+        onOpenFolder={vi.fn()}
+        onReset={vi.fn()}
+      />
+    );
+    expect(screen.getByText(/mode: private relay/i)).toBeInTheDocument();
+    expect(screen.getByText('my-node.network:9009')).toBeInTheDocument();
+  });
+
+  it('renders local LAN routing badge when isLocalOnly is true', () => {
+    render(
+      <ReceiveView
+        state="idle"
+        progress={{ percentage: 0, speedMBs: 0, etaSeconds: 0, fileName: '', bytesDone: 0, bytesTotal: 0 }}
+        codePhrase=""
+        isLocalOnly={true}
+        onReceive={vi.fn()}
+        onCancel={vi.fn()}
+        onOpenFolder={vi.fn()}
+        onReset={vi.fn()}
+      />
+    );
+    expect(screen.getByText(/mode: local lan only \(air-gapped\)/i)).toBeInTheDocument();
   });
 
   it('triggers onReceive with entered code phrase', () => {

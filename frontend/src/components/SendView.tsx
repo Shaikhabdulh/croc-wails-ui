@@ -16,6 +16,9 @@ import {
   FileArchive,
   FileImage,
   FileCode,
+  Wifi,
+  Server,
+  Globe,
 } from 'lucide-react';
 import { ProgressInfo, TransferState } from '../types/transfer';
 import { ProgressBar } from './ProgressBar';
@@ -28,6 +31,8 @@ interface SendViewProps {
   codePhrase: string;
   qrCodeUrl: string;
   error?: string | null;
+  relayAddress?: string;
+  isLocalOnly?: boolean;
   onSend: (pathOrPaths: string | string[]) => Promise<string>;
   onBrowse?: () => Promise<void>;
   onBrowseFolder?: () => Promise<void>;
@@ -41,6 +46,8 @@ export function SendView({
   codePhrase,
   qrCodeUrl,
   error,
+  relayAddress,
+  isLocalOnly,
   onSend,
   onBrowse,
   onBrowseFolder,
@@ -486,7 +493,26 @@ export function SendView({
             </div>
           </div>
 
-          <p className="text-xs text-slate-400">Waiting for recipient to accept...</p>
+          <div className="flex flex-col items-center gap-1.5 text-center">
+            <p className="text-xs text-slate-500 font-medium">Waiting for recipient to accept...</p>
+            <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-400">
+              {isLocalOnly ? (
+                <>
+                  <Wifi className="h-3 w-3 text-cyan-600" /> Routing: Local LAN Only (Air-gapped)
+                </>
+              ) : relayAddress && relayAddress.trim() !== '' ? (
+                <>
+                  <Server className="h-3 w-3 text-violet-600" /> Routing via Private Relay:{' '}
+                  <span className="font-mono text-slate-600">{relayAddress}</span>
+                </>
+              ) : (
+                <>
+                  <Globe className="h-3 w-3 text-slate-400" /> Routing via Public Relay:{' '}
+                  <span className="font-mono text-slate-500">getcroc.com</span>
+                </>
+              )}
+            </span>
+          </div>
 
           <button
             onClick={onCancel}
@@ -509,6 +535,8 @@ export function SendView({
             bytesTotal={progress.bytesTotal}
             filesDone={progress.filesDone}
             filesTotal={progress.filesTotal}
+            relayAddress={relayAddress}
+            isLocalOnly={isLocalOnly}
           />
           <button
             onClick={onCancel}

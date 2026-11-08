@@ -1,5 +1,18 @@
 import { useState, FormEvent } from 'react';
-import { Download, ClipboardPaste, FolderOpen, CheckCircle, AlertCircle, XCircle, Loader2, KeyRound, Folder } from 'lucide-react';
+import {
+  Download,
+  ClipboardPaste,
+  FolderOpen,
+  CheckCircle,
+  AlertCircle,
+  XCircle,
+  Loader2,
+  KeyRound,
+  Folder,
+  Wifi,
+  Server,
+  Globe,
+} from 'lucide-react';
 import { ProgressInfo, TransferState } from '../types/transfer';
 import { ProgressBar } from './ProgressBar';
 
@@ -10,6 +23,8 @@ interface ReceiveViewProps {
   downloadDir?: string;
   onChangeDownloadDir?: () => Promise<void>;
   error?: string | null;
+  relayAddress?: string;
+  isLocalOnly?: boolean;
   onReceive: (code: string) => Promise<void>;
   onCancel: () => Promise<void>;
   onOpenFolder: (fileName?: string) => Promise<void>;
@@ -23,6 +38,8 @@ export function ReceiveView({
   downloadDir,
   onChangeDownloadDir,
   error,
+  relayAddress,
+  isLocalOnly,
   onReceive,
   onCancel,
   onOpenFolder,
@@ -63,6 +80,25 @@ export function ReceiveView({
             <p className="text-xs text-slate-500">
               Enter the code phrase to start receiving
             </p>
+          </div>
+
+          {/* Network Routing Pill */}
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-100/90 px-3 py-1 text-[11px] font-medium text-slate-600 border border-slate-200/60 shadow-2xs">
+            {isLocalOnly ? (
+              <>
+                <Wifi className="h-3 w-3 text-cyan-600" /> Mode: Local LAN Only (Air-gapped)
+              </>
+            ) : relayAddress && relayAddress.trim() !== '' ? (
+              <>
+                <Server className="h-3 w-3 text-violet-600" /> Mode: Private Relay (
+                <span className="font-mono text-slate-700">{relayAddress}</span>)
+              </>
+            ) : (
+              <>
+                <Globe className="h-3 w-3 text-slate-400" /> Mode: Public Relay (
+                <span className="font-mono text-slate-600">getcroc.com</span>)
+              </>
+            )}
           </div>
 
           <form onSubmit={handleSubmit} className="w-full space-y-4">
@@ -125,6 +161,13 @@ export function ReceiveView({
           <div className="space-y-1">
             <h3 className="text-base font-bold text-slate-900 tracking-tight">Connecting to Sender...</h3>
             <p className="text-xs text-slate-500 font-mono">{codePhrase || inputCode}</p>
+            <p className="text-[11px] text-slate-400">
+              {isLocalOnly
+                ? 'Routing via local network broadcast...'
+                : relayAddress && relayAddress.trim() !== ''
+                ? `Routing via private relay (${relayAddress})...`
+                : 'Routing via public relay (getcroc.com)...'}
+            </p>
           </div>
           <button
             onClick={onCancel}
@@ -146,6 +189,8 @@ export function ReceiveView({
             bytesTotal={progress.bytesTotal}
             filesDone={progress.filesDone}
             filesTotal={progress.filesTotal}
+            relayAddress={relayAddress}
+            isLocalOnly={isLocalOnly}
           />
           <button
             onClick={onCancel}

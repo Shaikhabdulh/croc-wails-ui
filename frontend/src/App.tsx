@@ -114,6 +114,7 @@ export default function App() {
         onTabChange={setActiveTab}
         onOpenSettings={() => setIsSettingsOpen(true)}
         isLocalOnly={config.only_local}
+        relayAddress={config.relay_address}
         isTransferActive={isTransferActive}
       />
 
@@ -124,6 +125,8 @@ export default function App() {
             progress={progress}
             codePhrase={codePhrase}
             qrCodeUrl={qrCodeUrl}
+            relayAddress={config.relay_address}
+            isLocalOnly={config.only_local}
             error={error}
             onSend={handleSend}
             onCancel={cancel}
@@ -135,6 +138,8 @@ export default function App() {
             progress={progress}
             codePhrase={codePhrase}
             downloadDir={config.download_dir}
+            relayAddress={config.relay_address}
+            isLocalOnly={config.only_local}
             onChangeDownloadDir={async () => {
               await handlePickDownloadDir();
             }}
