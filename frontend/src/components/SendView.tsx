@@ -5,7 +5,6 @@ import {
   FolderUp,
   Copy,
   Check,
-  QrCode,
   XCircle,
   CheckCircle,
   AlertCircle,
@@ -483,14 +482,6 @@ export function SendView({
               >
                 {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                 {copied ? 'Copied' : 'Copy'}
-              </button>
-              <button
-                onClick={() => setShowQrModal(true)}
-                className="rounded-xl border border-slate-200 bg-white p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 shadow-2xs active:scale-95 transition"
-                aria-label="Show QR Code"
-                title="Show QR Code"
-              >
-                <QrCode className="h-4 w-4" />
               </button>
             </div>
           </div>

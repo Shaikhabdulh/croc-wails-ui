@@ -60,7 +60,7 @@ describe('SendView Component', () => {
     );
     expect(screen.getByText('7777-test-code')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /copy/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /qr/i })).toBeInTheDocument();
+    expect(screen.getByAltText(/qr code for 7777-test-code/i)).toBeInTheDocument();
   });
 
   it('renders progress bar and metrics when transferring', () => {
