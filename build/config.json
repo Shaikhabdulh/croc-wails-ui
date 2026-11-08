@@ -1,0 +1,10 @@
+{
+  "name": "croc-interface",
+  "version": "1.0.0",
+  "description": "Minimalist Desktop GUI for Croc",
+  "frontend": {
+    "dir": "frontend",
+    "install": "bun install",
+    "build": "bun run build"
+  }
+}

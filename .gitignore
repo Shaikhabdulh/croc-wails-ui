@@ -1,0 +1,18 @@
+# Dependencies
+frontend/node_modules/
+node_modules/
+
+# Production build outputs
+frontend/dist/
+build/bin/
+bin/
+
+# SDD workspace
+.superpowers/
+
+# OS and Editor files
+.DS_Store
+*.swp
+*~
+.idea/
+.vscode/
