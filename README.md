@@ -41,6 +41,17 @@ cd frontend && bun test && cd ..
 
 ---
 
+## Acknowledgments & Credits
+
+The core powerhouse of this project is **[`croc`](https://github.com/schollz/croc)**, designed, built, and maintained by **[Zack Scholl (@schollz)](https://github.com/schollz)**.
+
+All cryptographic foundations—including the SPAKE2 Password-Authenticated Key Exchange (PAKE), 256-bit authenticated encryption (ChaCha20-Poly1305), multi-stream TCP parallel pipes, peer discovery, and in-memory relay architecture—are powered entirely by Zack Scholl's open-source engineering.
+
+- **Backend Transfer Engine:** [schollz/croc](https://github.com/schollz/croc) by **Zack Scholl**
+- **Desktop Application Framework:** [Wails v3](https://github.com/wailsapp/wails) by **Lea Anthony**
+
+---
+
 ## Legal & Attribution
 
 This project is an unofficial UI for croc (https://github.com/schollz/croc),

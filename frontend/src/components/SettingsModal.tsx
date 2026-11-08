@@ -8,6 +8,7 @@ import {
   Check,
   Copy,
   AlertCircle,
+  Heart,
 } from 'lucide-react';
 import { UserConfig, RelayStatus, api } from '../api';
 
@@ -410,6 +411,20 @@ export function SettingsModal({
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Core Engine Attribution & Credits */}
+          <div className="rounded-2xl border border-slate-200/70 bg-slate-50/60 p-3 space-y-1.5 text-left">
+            <div className="flex items-center justify-between text-xs font-semibold text-slate-800">
+              <span className="flex items-center gap-1.5">
+                <Heart className="h-3.5 w-3.5 text-rose-500 fill-rose-500 shrink-0" />
+                Backend Engine: croc by Zack Scholl
+              </span>
+              <span className="text-[10px] text-slate-400 font-mono">MIT License</span>
+            </div>
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              The cryptographic engine, zero-knowledge PAKE key exchange, multi-stream transfer, and relay architecture are created by <strong>Zack Scholl (@schollz)</strong>. Desktop UI built with <strong>Wails</strong> by Lea Anthony.
+            </p>
           </div>
         </div>
 

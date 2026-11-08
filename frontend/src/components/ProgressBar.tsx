@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowUpRight, Laptop, ChevronDown, ChevronUp, ShieldCheck, Lock, Cpu, Network, CheckCircle2 } from 'lucide-react';
+import { ArrowUpRight, Laptop, Server, ChevronDown, ChevronUp, ShieldCheck, Lock, Network, Heart } from 'lucide-react';
 import { formatBytes, formatSeconds } from '../utils/format';
 
 interface ProgressBarProps {
@@ -28,61 +28,77 @@ export function ProgressBar({
 
   return (
     <div className="w-full space-y-4">
-      {/* Animated P2P Stream Graphic */}
-      <div className="relative flex items-center justify-between rounded-2xl bg-slate-50/80 p-3 border border-slate-200/70 shadow-inner">
+      {/* 3-Node Transparent Network Flow: Sender -> Relay -> Receiver */}
+      <div className="relative flex items-center justify-between rounded-2xl bg-slate-50/90 p-3 border border-slate-200/80 shadow-inner">
         {/* Node 1: Sender */}
         <div className="flex flex-col items-center gap-1 shrink-0">
-          <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-slate-200 text-indigo-600 shadow-2xs">
-            <Laptop className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+          <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-slate-200 text-indigo-600 shadow-2xs">
+            <Laptop className="h-4.5 w-4.5" />
+            <span className="absolute -top-1 -right-1 flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-600" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-600" />
             </span>
           </div>
-          <span className="text-[10px] font-semibold text-slate-500">Sender</span>
+          <span className="text-[10px] font-semibold text-slate-600">Sender</span>
         </div>
 
-        {/* Animated Data Stream Vector */}
-        <div className="flex-1 mx-3 flex flex-col items-center">
-          <div className="relative w-full flex items-center justify-center">
-            {/* SVG Connecting Flow */}
-            <svg className="w-full h-4" preserveAspectRatio="none" viewBox="0 0 100 12">
-              <line
-                x1="0"
-                y1="6"
-                x2="100"
-                y2="6"
-                stroke="#CBD5E1"
-                strokeWidth="2"
-              />
-              <line
-                x1="0"
-                y1="6"
-                x2="100"
-                y2="6"
-                stroke="#6366F1"
-                strokeWidth="2.5"
-                strokeDasharray="6 8"
-                className="animate-flow-dash"
-              />
-            </svg>
-          </div>
-          <div className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-indigo-700 bg-indigo-50/90 px-2 py-0.5 rounded-full border border-indigo-200/60">
-            <Lock className="h-2.5 w-2.5 text-indigo-600" />
-            <span>ChaCha20-Poly1305</span>
-          </div>
+        {/* Animated Stream 1: Sender -> Relay */}
+        <div className="flex-1 mx-1.5 flex flex-col items-center">
+          <svg className="w-full h-3" preserveAspectRatio="none" viewBox="0 0 100 8">
+            <line x1="0" y1="4" x2="100" y2="4" stroke="#CBD5E1" strokeWidth="2" />
+            <line
+              x1="0"
+              y1="4"
+              x2="100"
+              y2="4"
+              stroke="#6366F1"
+              strokeWidth="2"
+              strokeDasharray="4 6"
+              className="animate-flow-dash"
+            />
+          </svg>
+          <span className="text-[9px] font-mono text-indigo-500 font-medium">encrypted</span>
         </div>
 
-        {/* Node 2: Receiver */}
+        {/* Node 2: Transparent Relay Server */}
         <div className="flex flex-col items-center gap-1 shrink-0">
-          <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-slate-200 text-emerald-600 shadow-2xs">
-            <Laptop className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-600" />
+          <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-violet-50 border border-violet-200 text-violet-600 shadow-2xs" title="Relay Server: Blind Rendezvous (Zero payload access)">
+            <Server className="h-4.5 w-4.5" />
+            <span className="absolute -bottom-1 flex items-center justify-center bg-white rounded-full p-0.5 border border-violet-200 shadow-2xs">
+              <Lock className="h-2 w-2 text-violet-600" />
             </span>
           </div>
-          <span className="text-[10px] font-semibold text-slate-500">Receiver</span>
+          <span className="text-[10px] font-semibold text-violet-700">Relay</span>
+        </div>
+
+        {/* Animated Stream 2: Relay -> Receiver */}
+        <div className="flex-1 mx-1.5 flex flex-col items-center">
+          <svg className="w-full h-3" preserveAspectRatio="none" viewBox="0 0 100 8">
+            <line x1="0" y1="4" x2="100" y2="4" stroke="#CBD5E1" strokeWidth="2" />
+            <line
+              x1="0"
+              y1="4"
+              x2="100"
+              y2="4"
+              stroke="#10B981"
+              strokeWidth="2"
+              strokeDasharray="4 6"
+              className="animate-flow-dash"
+            />
+          </svg>
+          <span className="text-[9px] font-mono text-emerald-600 font-medium">encrypted</span>
+        </div>
+
+        {/* Node 3: Receiver */}
+        <div className="flex flex-col items-center gap-1 shrink-0">
+          <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-slate-200 text-emerald-600 shadow-2xs">
+            <Laptop className="h-4.5 w-4.5" />
+            <span className="absolute -top-1 -right-1 flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600" />
+            </span>
+          </div>
+          <span className="text-[10px] font-semibold text-slate-600">Receiver</span>
         </div>
       </div>
 
@@ -142,8 +158,8 @@ export function ProgressBar({
           className="flex w-full items-center justify-between rounded-xl border border-slate-200/70 bg-slate-50/60 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
         >
           <span className="flex items-center gap-1.5">
-            <Cpu className="h-3.5 w-3.5 text-indigo-500" />
-            <span>Technical Details</span>
+            <Lock className="h-3.5 w-3.5 text-indigo-500" />
+            <span>Technical Details & Architecture</span>
           </span>
           {showTechnical ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
         </button>
@@ -160,25 +176,32 @@ export function ProgressBar({
               <div className="space-y-0.5">
                 <span className="text-slate-400 block">Stream Cipher</span>
                 <span className="font-mono font-semibold text-slate-800 flex items-center gap-1">
-                  <Lock className="h-3 w-3 text-indigo-600" /> 256-bit AEAD
+                  <Lock className="h-3 w-3 text-indigo-600" /> ChaCha20-Poly1305
+                </span>
+              </div>
+              <div className="space-y-0.5">
+                <span className="text-slate-400 block">Relay Privacy</span>
+                <span className="font-mono font-semibold text-slate-800 flex items-center gap-1">
+                  <Server className="h-3 w-3 text-violet-600" /> Blind In-Memory Relay
                 </span>
               </div>
               <div className="space-y-0.5">
                 <span className="text-slate-400 block">Transport Sockets</span>
                 <span className="font-mono font-semibold text-slate-800 flex items-center gap-1">
-                  <Network className="h-3 w-3 text-violet-600" /> 4 Multi-Streams
-                </span>
-              </div>
-              <div className="space-y-0.5">
-                <span className="text-slate-400 block">Checksum Integrity</span>
-                <span className="font-mono font-semibold text-slate-800 flex items-center gap-1">
-                  <CheckCircle2 className="h-3 w-3 text-emerald-600" /> SHA-256 Blocks
+                  <Network className="h-3 w-3 text-indigo-600" /> 4 Multi-Streams
                 </span>
               </div>
             </div>
-            <div className="pt-1.5 border-t border-slate-200/60 text-[10px] text-slate-400 flex items-center justify-between">
-              <span>Relay Storage: In-Memory Only</span>
-              <span>Snappy / Zstd Stream Compression</span>
+
+            <div className="pt-2 border-t border-slate-200/60 text-[10px] text-slate-500 space-y-1">
+              <div className="flex items-center justify-between">
+                <span>Verification: <strong>Per-chunk SHA-256 rolling hash</strong></span>
+                <span>Compression: <strong>Snappy / Zstandard</strong></span>
+              </div>
+              <div className="flex items-center gap-1 text-slate-600 pt-0.5">
+                <Heart className="h-3 w-3 text-rose-500 fill-rose-500 shrink-0" />
+                <span>Backend Engine: <strong>croc</strong> by <strong>Zack Scholl (@schollz)</strong></span>
+              </div>
             </div>
           </div>
         )}
