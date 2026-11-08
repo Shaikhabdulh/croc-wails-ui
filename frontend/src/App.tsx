@@ -49,7 +49,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen w-screen flex-col bg-slate-50 text-slate-800 antialiased overflow-hidden">
+    <div className="flex h-screen w-screen flex-col bg-gradient-to-b from-slate-50 via-white to-slate-50 text-slate-800 antialiased overflow-hidden">
       <Header
         activeTab={activeTab}
         onTabChange={setActiveTab}

@@ -16,8 +16,13 @@ describe('App Shell', () => {
     expect(screen.getByText(/drag and drop a file/i)).toBeInTheDocument();
   });
 
-  it('renders and toggles Local LAN switch', () => {
+  it('renders and toggles Local LAN switch inside settings', () => {
     render(<App />);
+
+    // Open settings popover
+    const settingsButton = screen.getByRole('button', { name: /settings/i });
+    fireEvent.click(settingsButton);
+
     const lanToggle = screen.getByRole('switch', { name: /local lan only/i });
     expect(lanToggle).toBeInTheDocument();
     expect(lanToggle).toHaveAttribute('aria-checked', 'false');
