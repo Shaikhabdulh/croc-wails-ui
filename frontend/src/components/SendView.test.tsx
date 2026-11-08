@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { SendView } from './SendView';
 
 describe('SendView Component', () => {
@@ -16,6 +16,34 @@ describe('SendView Component', () => {
       />
     );
     expect(screen.getByText(/drag and drop a file/i)).toBeInTheDocument();
+  });
+
+  it('renders Choose File and Choose Folder buttons when idle', () => {
+    const onBrowse = vi.fn();
+    const onBrowseFolder = vi.fn();
+    render(
+      <SendView
+        state="idle"
+        progress={{ percentage: 0, speedMBs: 0, etaSeconds: 0, fileName: '', bytesDone: 0, bytesTotal: 0 }}
+        codePhrase=""
+        qrCodeUrl=""
+        onSend={vi.fn()}
+        onBrowse={onBrowse}
+        onBrowseFolder={onBrowseFolder}
+        onCancel={vi.fn()}
+        onReset={vi.fn()}
+      />
+    );
+    const fileBtn = screen.getByRole('button', { name: /choose file/i });
+    const folderBtn = screen.getByRole('button', { name: /choose folder/i });
+    expect(fileBtn).toBeInTheDocument();
+    expect(folderBtn).toBeInTheDocument();
+
+    fireEvent.click(fileBtn);
+    expect(onBrowse).toHaveBeenCalled();
+
+    fireEvent.click(folderBtn);
+    expect(onBrowseFolder).toHaveBeenCalled();
   });
 
   it('renders code phrase and copy button when waiting', () => {

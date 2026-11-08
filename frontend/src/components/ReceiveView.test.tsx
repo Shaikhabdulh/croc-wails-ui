@@ -39,6 +39,27 @@ describe('ReceiveView Component', () => {
     expect(onReceive).toHaveBeenCalledWith('7777-receive-code');
   });
 
+  it('displays saving location and triggers change folder callback', () => {
+    const onChangeDir = vi.fn();
+    render(
+      <ReceiveView
+        state="idle"
+        progress={{ percentage: 0, speedMBs: 0, etaSeconds: 0, fileName: '', bytesDone: 0, bytesTotal: 0 }}
+        codePhrase=""
+        downloadDir="/custom/save/dir"
+        onChangeDownloadDir={onChangeDir}
+        onReceive={vi.fn()}
+        onCancel={vi.fn()}
+        onOpenFolder={vi.fn()}
+        onReset={vi.fn()}
+      />
+    );
+    expect(screen.getByText('/custom/save/dir')).toBeInTheDocument();
+    const changeBtn = screen.getByRole('button', { name: /\(change\)/i });
+    fireEvent.click(changeBtn);
+    expect(onChangeDir).toHaveBeenCalled();
+  });
+
   it('renders Open Folder button when completed', () => {
     const onOpenFolder = vi.fn();
     render(

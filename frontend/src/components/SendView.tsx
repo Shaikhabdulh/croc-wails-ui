@@ -1,5 +1,16 @@
 import { useState, DragEvent } from 'react';
-import { UploadCloud, Copy, Check, QrCode, XCircle, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import {
+  UploadCloud,
+  FileUp,
+  FolderUp,
+  Copy,
+  Check,
+  QrCode,
+  XCircle,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+} from 'lucide-react';
 import { ProgressInfo, TransferState } from '../types/transfer';
 import { ProgressBar } from './ProgressBar';
 import { QRCodeModal } from './QRCodeModal';
@@ -13,6 +24,7 @@ interface SendViewProps {
   error?: string | null;
   onSend: (path: string) => Promise<string>;
   onBrowse?: () => Promise<void>;
+  onBrowseFolder?: () => Promise<void>;
   onCancel: () => Promise<void>;
   onReset: () => void;
 }
@@ -25,6 +37,7 @@ export function SendView({
   error,
   onSend,
   onBrowse,
+  onBrowseFolder,
   onCancel,
   onReset,
 }: SendViewProps) {
@@ -34,25 +47,49 @@ export function SendView({
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'copy';
+    }
     setIsDragging(true);
   };
 
-  const handleDragLeave = () => {
+  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
   };
 
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
     // Visual reset only; the native Wails window listener handles the OS absolute paths
   };
 
-  const handleBrowseClick = async () => {
+  const handleBrowseFile = async (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     try {
       if (onBrowse) {
         await onBrowse();
       } else {
         const path = await api.PickFile();
+        if (path) {
+          await onSend(path);
+        }
+      }
+    } catch {
+      // dialog cancelled
+    }
+  };
+
+  const handleBrowseFolder = async (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    try {
+      if (onBrowseFolder) {
+        await onBrowseFolder();
+      } else {
+        const path = await api.PickFolder();
         if (path) {
           await onSend(path);
         }
@@ -74,7 +111,10 @@ export function SendView({
   };
 
   return (
-    <div className="flex h-full flex-col items-center justify-center p-6">
+    <div
+      data-file-drop-target="true"
+      className="flex h-full flex-col items-center justify-center p-6"
+    >
       <QRCodeModal
         isOpen={showQrModal}
         onClose={() => setShowQrModal(false)}
@@ -84,10 +124,11 @@ export function SendView({
 
       {state === 'idle' && (
         <div
+          data-file-drop-target="true"
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          onClick={handleBrowseClick}
+          onClick={handleBrowseFile}
           className={`flex w-full max-w-md cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-10 text-center transition-all duration-200 ${
             isDragging
               ? 'border-indigo-500 bg-indigo-50/50 scale-[1.01]'
@@ -100,10 +141,30 @@ export function SendView({
           <p className="text-base font-semibold text-slate-800">
             Drag and drop a file or folder here
           </p>
-          <p className="mt-1 text-sm text-slate-500">
-            or <span className="text-indigo-600 font-medium hover:underline">browse from your computer</span>
+          <p className="mt-1 text-xs text-slate-500">
+            or select from your computer
           </p>
-          <p className="mt-4 text-xs text-slate-400">
+
+          <div className="mt-4 flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={handleBrowseFile}
+              className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 active:scale-95 transition"
+            >
+              <FileUp className="h-3.5 w-3.5" />
+              Choose File
+            </button>
+            <button
+              type="button"
+              onClick={handleBrowseFolder}
+              className="flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 active:scale-95 transition"
+            >
+              <FolderUp className="h-3.5 w-3.5" />
+              Choose Folder
+            </button>
+          </div>
+
+          <p className="mt-5 text-[11px] text-slate-400">
             End-to-end encrypted peer-to-peer transfer
           </p>
         </div>

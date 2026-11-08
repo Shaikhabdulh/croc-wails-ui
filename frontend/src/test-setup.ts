@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
 import { vi } from 'vitest';
 
 vi.mock('@wailsio/runtime', () => ({
@@ -10,8 +10,20 @@ vi.mock('@wailsio/runtime', () => ({
       if (methodName.endsWith('.PickFile')) {
         return Promise.resolve('/mock/path/file.txt');
       }
+      if (methodName.endsWith('.PickFolder')) {
+        return Promise.resolve('/mock/path/folder');
+      }
       if (methodName.endsWith('.GenerateQRCode')) {
         return Promise.resolve('data:image/png;base64,mockqr');
+      }
+      if (methodName.endsWith('.GetDownloadDir')) {
+        return Promise.resolve('/home/user/Downloads');
+      }
+      if (methodName.endsWith('.PickDownloadDir')) {
+        return Promise.resolve('/home/user/CustomFolder');
+      }
+      if (methodName.endsWith('.ResetDownloadDir')) {
+        return Promise.resolve('/home/user/Downloads');
       }
       return Promise.resolve(undefined);
     }),

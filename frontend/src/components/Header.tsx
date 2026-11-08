@@ -1,11 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
-import { UploadCloud, Download, Settings } from 'lucide-react';
+import { UploadCloud, Download, Settings, Folder, RotateCcw } from 'lucide-react';
 
 interface HeaderProps {
   activeTab: 'send' | 'receive';
   onTabChange: (tab: 'send' | 'receive') => void;
   isLocalOnly: boolean;
   onLocalOnlyChange: (enabled: boolean) => void;
+  downloadDir: string;
+  onPickDownloadDir: () => Promise<void>;
+  onResetDownloadDir: () => Promise<void>;
   isTransferActive: boolean;
 }
 
@@ -14,6 +17,9 @@ export function Header({
   onTabChange,
   isLocalOnly,
   onLocalOnlyChange,
+  downloadDir,
+  onPickDownloadDir,
+  onResetDownloadDir,
   isTransferActive,
 }: HeaderProps) {
   const [showSettings, setShowSettings] = useState(false);
@@ -89,7 +95,7 @@ export function Header({
           className={`relative rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition ${
             isLocalOnly ? 'text-indigo-600 bg-indigo-50/60' : ''
           } ${isTransferActive ? 'opacity-40 cursor-not-allowed' : ''}`}
-          title="Network settings"
+          title="Settings & options"
         >
           <Settings className="h-4 w-4" />
           {isLocalOnly && (
@@ -98,45 +104,83 @@ export function Header({
         </button>
 
         {showSettings && (
-          <div className="absolute right-0 top-11 w-72 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-900/10 space-y-3 z-50 text-left animate-in fade-in zoom-in-95 duration-100">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                Network Options
-              </span>
-              <span className="text-[10px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full">
-                Auto-LAN Active
-              </span>
+          <div className="absolute right-0 top-11 w-80 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-900/10 space-y-3 z-50 text-left animate-in fade-in zoom-in-95 duration-100">
+            {/* Save Location Section */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                  Save Location
+                </span>
+                <button
+                  type="button"
+                  onClick={onResetDownloadDir}
+                  className="flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-indigo-600 transition"
+                  title="Reset to default ~/Downloads"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  Reset
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2 rounded-xl bg-slate-50 p-2 border border-slate-200">
+                <Folder className="h-4 w-4 text-slate-400 shrink-0" />
+                <span
+                  className="flex-1 truncate font-mono text-[11px] text-slate-700"
+                  title={downloadDir}
+                >
+                  {downloadDir || 'Loading...'}
+                </span>
+                <button
+                  type="button"
+                  onClick={onPickDownloadDir}
+                  className="rounded-lg bg-white px-2.5 py-1 text-[11px] font-semibold text-indigo-600 border border-slate-200 shadow-xs hover:bg-indigo-50 active:scale-95 transition shrink-0"
+                >
+                  Change
+                </button>
+              </div>
             </div>
 
-            <p className="text-[11px] text-slate-500 leading-relaxed">
-              Croc automatically detects peers on your local Wi-Fi and transfers data directly at maximum local speed.
-            </p>
-
-            <div className="flex items-center justify-between pt-1 border-t border-slate-100">
-              <div className="space-y-0.5">
-                <label className="text-xs font-medium text-slate-700 block">
-                  Local LAN Only
-                </label>
-                <span className="text-[10px] text-slate-400 block">
-                  Air-gapped (no internet relay)
+            {/* Network Options Section */}
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                  Network Options
+                </span>
+                <span className="text-[10px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full">
+                  Auto-LAN Active
                 </span>
               </div>
 
-              <button
-                role="switch"
-                aria-label="Local LAN Only"
-                aria-checked={isLocalOnly}
-                onClick={() => onLocalOnlyChange(!isLocalOnly)}
-                className={`h-5 w-9 rounded-full transition-colors relative cursor-pointer ${
-                  isLocalOnly ? 'bg-indigo-600' : 'bg-slate-200'
-                }`}
-              >
-                <div
-                  className={`h-4 w-4 rounded-full bg-white shadow-sm transition-transform absolute top-0.5 ${
-                    isLocalOnly ? 'left-4.5' : 'left-0.5'
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                Croc automatically transfers directly at high speed when devices share a local Wi-Fi or subnet.
+              </p>
+
+              <div className="flex items-center justify-between pt-1">
+                <div className="space-y-0.5">
+                  <label className="text-xs font-medium text-slate-700 block">
+                    Local LAN Only
+                  </label>
+                  <span className="text-[10px] text-slate-400 block">
+                    Air-gapped (no internet relay)
+                  </span>
+                </div>
+
+                <button
+                  role="switch"
+                  aria-label="Local LAN Only"
+                  aria-checked={isLocalOnly}
+                  onClick={() => onLocalOnlyChange(!isLocalOnly)}
+                  className={`h-5 w-9 rounded-full transition-colors relative cursor-pointer ${
+                    isLocalOnly ? 'bg-indigo-600' : 'bg-slate-200'
                   }`}
-                />
-              </button>
+                >
+                  <div
+                    className={`h-4 w-4 rounded-full bg-white shadow-sm transition-transform absolute top-0.5 ${
+                      isLocalOnly ? 'left-4.5' : 'left-0.5'
+                    }`}
+                  />
+                </button>
+              </div>
             </div>
           </div>
         )}

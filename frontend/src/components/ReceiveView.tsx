@@ -7,6 +7,8 @@ interface ReceiveViewProps {
   state: TransferState;
   progress: ProgressInfo;
   codePhrase: string;
+  downloadDir?: string;
+  onChangeDownloadDir?: () => Promise<void>;
   error?: string | null;
   onReceive: (code: string) => Promise<void>;
   onCancel: () => Promise<void>;
@@ -18,6 +20,8 @@ export function ReceiveView({
   state,
   progress,
   codePhrase,
+  downloadDir,
+  onChangeDownloadDir,
   error,
   onReceive,
   onCancel,
@@ -90,9 +94,21 @@ export function ReceiveView({
             </button>
           </form>
 
-          <p className="text-xs text-slate-400">
-            Files will be automatically saved to your <span className="font-medium text-slate-600">Downloads</span> folder.
-          </p>
+          <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500">
+            <span>Saving to:</span>
+            <span className="font-mono text-slate-700 max-w-[200px] truncate" title={downloadDir}>
+              {downloadDir || 'Downloads'}
+            </span>
+            {onChangeDownloadDir && (
+              <button
+                type="button"
+                onClick={onChangeDownloadDir}
+                className="text-indigo-600 hover:underline font-medium ml-0.5"
+              >
+                (Change)
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -138,8 +154,9 @@ export function ReceiveView({
           </div>
           <div className="space-y-1">
             <h3 className="text-lg font-bold text-slate-900">Download Complete!</h3>
-            <p className="text-xs text-slate-500">
-              {progress.fileName ? `"${progress.fileName}" saved to Downloads` : 'Saved to Downloads folder'}
+            <p className="text-xs text-slate-500 truncate max-w-sm" title={downloadDir}>
+              {progress.fileName ? `"${progress.fileName}" saved to ` : 'Saved to '}
+              <span className="font-medium text-slate-700">{downloadDir || 'Downloads'}</span>
             </p>
           </div>
           <div className="flex w-full flex-col gap-2 pt-2">

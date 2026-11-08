@@ -22,13 +22,15 @@ import (
 type AppService struct {
 	mu      sync.Mutex
 	tm      *transfer.TransferManager
+	prefs   *PreferencesManager
 	emitter func(event string, data any)
 }
 
 // NewAppService creates an initialized AppService.
 func NewAppService() *AppService {
 	svc := &AppService{
-		tm: transfer.NewTransferManager(),
+		tm:    transfer.NewTransferManager(),
+		prefs: NewPreferencesManager(),
 	}
 
 	svc.tm.OnStateChange = func(state string) {
@@ -64,14 +66,25 @@ func (s *AppService) emitEvent(event string, data any) {
 	}
 }
 
-// PickFile displays the native OS file picker and returns the selected path.
+// PickFile displays the native OS file picker and returns the selected file path.
 func (s *AppService) PickFile() (string, error) {
 	app := application.Get()
 	if app == nil {
 		return "", nil
 	}
 	dialog := app.Dialog.OpenFile()
-	dialog.CanChooseFiles(true).CanChooseDirectories(true).SetTitle("Select File or Folder to Send")
+	dialog.CanChooseFiles(true).CanChooseDirectories(false).SetTitle("Select File to Send")
+	return dialog.PromptForSingleSelection()
+}
+
+// PickFolder displays the native OS folder picker and returns the selected directory path.
+func (s *AppService) PickFolder() (string, error) {
+	app := application.Get()
+	if app == nil {
+		return "", nil
+	}
+	dialog := app.Dialog.OpenFile()
+	dialog.CanChooseFiles(false).CanChooseDirectories(true).SetTitle("Select Folder to Send")
 	return dialog.PromptForSingleSelection()
 }
 
@@ -125,14 +138,14 @@ func (s *AppService) SendFile(filePath string, isLocalOnly bool) (string, error)
 	return code, nil
 }
 
-// ReceiveFile connects to a sender using codePhrase and receives the transfer into Downloads.
+// ReceiveFile connects to a sender using codePhrase and receives the transfer into the configured download directory.
 func (s *AppService) ReceiveFile(codePhrase string, isLocalOnly bool) error {
 	codePhrase = strings.TrimSpace(codePhrase)
 	if len(codePhrase) < 6 {
 		return errors.New("code phrase is invalid or too short (must be at least 6 characters)")
 	}
 
-	downloadDir, err := GetDefaultDownloadDir()
+	downloadDir, err := s.GetDownloadDir()
 	if err != nil {
 		return err
 	}
@@ -182,9 +195,9 @@ func (s *AppService) CancelTransfer() error {
 	return nil
 }
 
-// OpenDownloadsFolder reveals the downloaded file or opens the Downloads folder in the file manager.
+// OpenDownloadsFolder reveals the downloaded file or opens the configured download folder in the file manager.
 func (s *AppService) OpenDownloadsFolder(filename string) error {
-	dir, err := GetDefaultDownloadDir()
+	dir, err := s.GetDownloadDir()
 	if err != nil {
 		return err
 	}
@@ -209,9 +222,57 @@ func (s *AppService) GenerateQRCode(code string) (string, error) {
 	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(png), nil
 }
 
-// GetDownloadDir returns the path to the default download folder.
+// GetDownloadDir returns the path to the current configured download folder.
 func (s *AppService) GetDownloadDir() (string, error) {
-	return GetDefaultDownloadDir()
+	if s.prefs == nil {
+		return GetDefaultDownloadDir()
+	}
+	return s.prefs.GetDownloadDir()
+}
+
+// SetDownloadDir updates and persists the preferred download folder.
+func (s *AppService) SetDownloadDir(path string) error {
+	if s.prefs == nil {
+		s.prefs = NewPreferencesManager()
+	}
+	return s.prefs.SetDownloadDir(path)
+}
+
+// ResetDownloadDir resets the download folder to the system default (~/Downloads).
+func (s *AppService) ResetDownloadDir() (string, error) {
+	if s.prefs == nil {
+		return GetDefaultDownloadDir()
+	}
+	return s.prefs.ResetDownloadDir()
+}
+
+// PickDownloadDir prompts the user with a native folder chooser dialog and saves the selection.
+func (s *AppService) PickDownloadDir() (string, error) {
+	app := application.Get()
+	if app == nil {
+		return s.GetDownloadDir()
+	}
+
+	currentDir, _ := s.GetDownloadDir()
+	dialog := app.Dialog.OpenFile()
+	dialog.SetTitle("Select Default Download Folder").
+		CanChooseDirectories(true).
+		CanChooseFiles(false)
+
+	if currentDir != "" {
+		dialog.SetDirectory(currentDir)
+	}
+
+	selected, err := dialog.PromptForSingleSelection()
+	if err != nil || selected == "" {
+		return s.GetDownloadDir()
+	}
+
+	if err := s.SetDownloadDir(selected); err != nil {
+		return "", err
+	}
+
+	return selected, nil
 }
 
 func (s *AppService) buildOptions(code string, isSender bool, isLocalOnly bool) croc.Options {
