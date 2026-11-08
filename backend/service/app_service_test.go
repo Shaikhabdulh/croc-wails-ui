@@ -212,4 +212,35 @@ func TestConfigLifecycle(t *testing.T) {
 	}
 }
 
+func TestAppServiceEmbeddedRelay(t *testing.T) {
+	svc := NewAppService()
+
+	status, err := svc.GetEmbeddedRelayStatus()
+	if err != nil {
+		t.Fatalf("failed to get relay status: %v", err)
+	}
+	if status.IsRunning {
+		t.Fatal("expected relay to initially be stopped")
+	}
+
+	ports := findConsecutiveTestPorts(t, 4)
+	controlPort := ports[0]
+
+	status, err = svc.StartEmbeddedRelay(controlPort, "testsecret123")
+	if err != nil {
+		t.Fatalf("failed to start embedded relay: %v", err)
+	}
+	if !status.IsRunning {
+		t.Fatal("expected relay status to show running")
+	}
+
+	status, err = svc.StopEmbeddedRelay()
+	if err != nil {
+		t.Fatalf("failed to stop embedded relay: %v", err)
+	}
+	if status.IsRunning {
+		t.Fatal("expected relay status to show stopped")
+	}
+}
+
 

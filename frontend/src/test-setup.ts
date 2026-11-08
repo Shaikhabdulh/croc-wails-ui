@@ -54,6 +54,36 @@ vi.mock('@wailsio/runtime', () => ({
           auto_copy_code: true,
         });
       }
+      if (methodName.endsWith('.StartEmbeddedRelay')) {
+        return Promise.resolve({
+          is_running: true,
+          control_port: '9009',
+          data_ports: ['9010', '9011', '9012'],
+          addresses: ['192.168.1.50:9009', '127.0.0.1:9009'],
+          password: 'pass',
+          uptime_seconds: 5,
+        });
+      }
+      if (methodName.endsWith('.StopEmbeddedRelay')) {
+        return Promise.resolve({
+          is_running: false,
+          control_port: '',
+          data_ports: [],
+          addresses: [],
+          password: '',
+          uptime_seconds: 0,
+        });
+      }
+      if (methodName.endsWith('.GetEmbeddedRelayStatus')) {
+        return Promise.resolve({
+          is_running: false,
+          control_port: '',
+          data_ports: [],
+          addresses: ['192.168.1.50:9009', '127.0.0.1:9009'],
+          password: '',
+          uptime_seconds: 0,
+        });
+      }
       return Promise.resolve(undefined);
     }),
     ByID: vi.fn(),

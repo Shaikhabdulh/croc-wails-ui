@@ -9,6 +9,16 @@ export interface UserConfig {
   auto_copy_code: boolean;
 }
 
+export interface RelayStatus {
+  is_running: boolean;
+  control_port: string;
+  data_ports: string[];
+  addresses: string[];
+  password: string;
+  uptime_seconds: number;
+  error_message?: string;
+}
+
 export interface BackendService {
   PickFile: () => Promise<string>;
   PickFiles: () => Promise<string[]>;
@@ -27,6 +37,9 @@ export interface BackendService {
   GetConfig: () => Promise<UserConfig>;
   UpdateConfig: (cfg: UserConfig) => Promise<void>;
   ResetConfig: () => Promise<UserConfig>;
+  StartEmbeddedRelay: (port: string, password: string) => Promise<RelayStatus>;
+  StopEmbeddedRelay: () => Promise<RelayStatus>;
+  GetEmbeddedRelayStatus: () => Promise<RelayStatus>;
 }
 
 const SERVICE_FQN = 'croc-interface/backend/service.AppService';
@@ -99,6 +112,18 @@ export const api: BackendService = {
 
   ResetConfig: async (): Promise<UserConfig> => {
     return (await Call.ByName(`${SERVICE_FQN}.ResetConfig`)) as UserConfig;
+  },
+
+  StartEmbeddedRelay: async (port: string, password: string): Promise<RelayStatus> => {
+    return (await Call.ByName(`${SERVICE_FQN}.StartEmbeddedRelay`, port, password)) as RelayStatus;
+  },
+
+  StopEmbeddedRelay: async (): Promise<RelayStatus> => {
+    return (await Call.ByName(`${SERVICE_FQN}.StopEmbeddedRelay`)) as RelayStatus;
+  },
+
+  GetEmbeddedRelayStatus: async (): Promise<RelayStatus> => {
+    return (await Call.ByName(`${SERVICE_FQN}.GetEmbeddedRelayStatus`)) as RelayStatus;
   },
 };
 

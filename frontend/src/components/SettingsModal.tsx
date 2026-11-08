@@ -1,6 +1,18 @@
 import { useState, useEffect } from 'react';
-import { X, Folder, RotateCcw, Server, Shield, HardDrive, Check, Key } from 'lucide-react';
-import { UserConfig } from '../api';
+import {
+  X,
+  Folder,
+  RotateCcw,
+  Server,
+  Shield,
+  HardDrive,
+  Check,
+  Key,
+  Radio,
+  Copy,
+  AlertCircle,
+} from 'lucide-react';
+import { UserConfig, RelayStatus, api } from '../api';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -23,10 +35,35 @@ export function SettingsModal({
   const [useCustomRelay, setUseCustomRelay] = useState<boolean>(Boolean(config.relay_address));
   const [savedFeedback, setSavedFeedback] = useState<boolean>(false);
 
+  // Embedded Relay Hosting State
+  const [relayStatus, setRelayStatus] = useState<RelayStatus | null>(null);
+  const [hostPort, setHostPort] = useState<string>('9009');
+  const [hostPassword, setHostPassword] = useState<string>('');
+  const [isRelayLoading, setIsRelayLoading] = useState<boolean>(false);
+  const [relayError, setRelayError] = useState<string | null>(null);
+  const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
+
   useEffect(() => {
     setLocalCfg(config);
     setUseCustomRelay(Boolean(config.relay_address));
   }, [config, isOpen]);
+
+  // Sync embedded relay status on modal open
+  useEffect(() => {
+    if (isOpen) {
+      api.GetEmbeddedRelayStatus()
+        .then((status) => {
+          setRelayStatus(status);
+          if (status?.control_port) {
+            setHostPort(status.control_port);
+          }
+          if (status?.password) {
+            setHostPassword(status.password);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -62,6 +99,36 @@ export function SettingsModal({
     setSavedFeedback(true);
     setTimeout(() => setSavedFeedback(false), 1500);
   };
+
+  const handleToggleHostRelay = async (enable: boolean) => {
+    setIsRelayLoading(true);
+    setRelayError(null);
+    try {
+      if (enable) {
+        const status = await api.StartEmbeddedRelay(hostPort.trim() || '9009', hostPassword);
+        setRelayStatus(status);
+        if (status.error_message) {
+          setRelayError(status.error_message);
+        }
+      } else {
+        const status = await api.StopEmbeddedRelay();
+        setRelayStatus(status);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setRelayError(msg || 'Failed to toggle relay');
+    } finally {
+      setIsRelayLoading(false);
+    }
+  };
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard?.writeText(text);
+    setCopiedAddress(text);
+    setTimeout(() => setCopiedAddress(null), 1500);
+  };
+
+  const isRelayRunning = Boolean(relayStatus?.is_running);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-150">
@@ -290,6 +357,156 @@ export function SettingsModal({
               </div>
             </div>
           </div>
+
+          {/* Private Relay Server (Host Mode) */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-900 uppercase tracking-wider">
+                <div className="flex h-5 w-5 items-center justify-center rounded-md bg-violet-50 text-violet-600">
+                  <Radio className="h-3 w-3" />
+                </div>
+                Host Private Relay
+              </div>
+              {isRelayRunning && (
+                <span className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60 animate-in fade-in">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Relay Active
+                </span>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5 pr-4">
+                  <span className="text-xs font-semibold text-slate-800 block">
+                    Host Relay Server on this Computer
+                  </span>
+                  <span className="text-[11px] text-slate-500 block">
+                    Run an embedded croc relay on your machine for private LAN or internet transfers
+                  </span>
+                </div>
+                <button
+                  role="switch"
+                  aria-label="Host Relay Server"
+                  aria-checked={isRelayRunning}
+                  disabled={isRelayLoading}
+                  onClick={() => handleToggleHostRelay(!isRelayRunning)}
+                  className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 disabled:opacity-50 ${
+                    isRelayRunning ? 'bg-violet-600' : 'bg-slate-200 hover:bg-slate-300'
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs transition duration-200 ease-in-out ${
+                      isRelayRunning ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {relayError && (
+                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-50 border border-rose-200/70 text-[11px] text-rose-700">
+                  <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                  <span>{relayError}</span>
+                </div>
+              )}
+
+              {/* Configuration Inputs (when not running or can configure) */}
+              {!isRelayRunning ? (
+                <div className="space-y-2.5 pt-2 border-t border-slate-200/60 text-xs">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                        Control Port
+                      </label>
+                      <input
+                        type="text"
+                        value={hostPort}
+                        onChange={(e) => setHostPort(e.target.value)}
+                        placeholder="9009"
+                        className="w-full rounded-xl border border-slate-200 bg-white py-1.5 px-3 text-xs font-mono text-slate-900 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                        Password (optional)
+                      </label>
+                      <input
+                        type="password"
+                        value={hostPassword}
+                        onChange={(e) => setHostPassword(e.target.value)}
+                        placeholder="Default if blank"
+                        className="w-full rounded-xl border border-slate-200 bg-white py-1.5 px-3 text-xs text-slate-900 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    Will open port {hostPort || '9009'} (control) and 4 dynamic data ports (e.g. 9010-9013).
+                  </p>
+                </div>
+              ) : (
+                /* Running Details & Addresses */
+                <div className="space-y-3 pt-2 border-t border-slate-200/60 animate-in fade-in">
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] font-semibold text-slate-700 block">
+                      Connectable Addresses for other devices:
+                    </span>
+                    <div className="space-y-1.5">
+                      {relayStatus?.addresses && relayStatus.addresses.length > 0 ? (
+                        relayStatus.addresses.map((addr) => (
+                          <div
+                            key={addr}
+                            className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-1.5 shadow-2xs text-xs font-mono"
+                          >
+                            <span className="text-slate-800">{addr}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopy(addr)}
+                              aria-label={`Copy ${addr}`}
+                              className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-sans font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
+                            >
+                              {copiedAddress === addr ? (
+                                <>
+                                  <Check className="h-3 w-3 text-emerald-600" />
+                                  <span className="text-emerald-700 font-semibold">Copied!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="h-3 w-3" />
+                                  <span>Copy</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-[11px] text-slate-500 font-mono">
+                          Listening on 0.0.0.0:{hostPort}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Quick self-connect button */}
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
+                    <span className="text-[11px] text-slate-500">
+                      Use this relay for transfers from this computer:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const localAddr = `127.0.0.1:${hostPort || '9009'}`;
+                        setUseCustomRelay(true);
+                        handleRelayChange(localAddr, hostPassword);
+                      }}
+                      className="rounded-xl border border-violet-200 bg-violet-50/60 px-2.5 py-1 text-[11px] font-semibold text-violet-700 hover:bg-violet-100 active:scale-95 transition"
+                    >
+                      Use as Active Relay
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Modal Footer */}
@@ -314,3 +531,4 @@ export function SettingsModal({
     </div>
   );
 }
+

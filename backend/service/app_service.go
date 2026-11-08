@@ -21,17 +21,19 @@ import (
 
 // AppService bridges GUI actions to the underlying Croc transfer engine.
 type AppService struct {
-	mu      sync.Mutex
-	tm      *transfer.TransferManager
-	prefs   *PreferencesManager
-	emitter func(event string, data any)
+	mu       sync.Mutex
+	tm       *transfer.TransferManager
+	prefs    *PreferencesManager
+	relayMgr *EmbeddedRelayManager
+	emitter  func(event string, data any)
 }
 
 // NewAppService creates an initialized AppService.
 func NewAppService() *AppService {
 	svc := &AppService{
-		tm:    transfer.NewTransferManager(),
-		prefs: NewPreferencesManager(),
+		tm:       transfer.NewTransferManager(),
+		prefs:    NewPreferencesManager(),
+		relayMgr: NewEmbeddedRelayManager(),
 	}
 
 	svc.tm.OnStateChange = func(state string) {
@@ -379,4 +381,21 @@ func (s *AppService) buildOptions(code string, isSender bool, isLocalOnly bool) 
 		DisableClipboard: true,
 		DisableTailcat:   true,
 	}
+}
+
+// StartEmbeddedRelay starts the in-app private relay server on the designated control port.
+func (s *AppService) StartEmbeddedRelay(port string, password string) (RelayStatus, error) {
+	err := s.relayMgr.Start(port, 3, password)
+	return s.relayMgr.Status(), err
+}
+
+// StopEmbeddedRelay stops the in-app private relay server.
+func (s *AppService) StopEmbeddedRelay() (RelayStatus, error) {
+	err := s.relayMgr.Stop()
+	return s.relayMgr.Status(), err
+}
+
+// GetEmbeddedRelayStatus returns the status and listening addresses of the embedded relay server.
+func (s *AppService) GetEmbeddedRelayStatus() (RelayStatus, error) {
+	return s.relayMgr.Status(), nil
 }
