@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Croc
+GenericName=File Transfer
+Comment=Secure, encrypted, peer-to-peer file transfer
+Exec=croc-wails-ui %U
+Icon=croc-wails-ui
+Terminal=false
+Type=Application
+Categories=Network;FileTransfer;Utility;
+Keywords=p2p;transfer;croc;secure;encrypted;
+StartupWMClass=croc-wails-ui
+MimeType=x-scheme-handler/croc;

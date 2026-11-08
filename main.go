@@ -2,8 +2,14 @@ package main
 
 import (
 	"embed"
+	"flag"
+	"fmt"
+	"io/fs"
 	"log"
+	"net/http"
+	"os"
 
+	"croc-interface/backend/server"
 	"croc-interface/backend/service"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -19,7 +25,27 @@ var appIcon []byte
 const appName = "Croc Interface"
 
 func main() {
+	serverMode := flag.Bool("server", false, "Run in headless HTTP/WebSocket micro-daemon mode for mobile/web")
+	port := flag.Int("port", 8080, "Port for HTTP micro-daemon mode")
+	flag.Parse()
+
 	appSvc := service.NewAppService()
+
+	// Check environment variable as fallback
+	if *serverMode || os.Getenv("CROC_UI_MODE") == "server" {
+		distSub, err := fs.Sub(assets, "frontend/dist")
+		if err != nil {
+			log.Fatalf("failed to locate embedded frontend assets: %v", err)
+		}
+
+		httpSrv := server.NewHTTPServer(appSvc, http.FS(distSub))
+		addr := fmt.Sprintf("0.0.0.0:%d", *port)
+		log.Printf("[Croc UI] Micro-daemon listening at http://%s\n", addr)
+		if err := http.ListenAndServe(addr, httpSrv.Router()); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
 
 	opts := application.Options{
 		Name:        "croc-wails-ui",

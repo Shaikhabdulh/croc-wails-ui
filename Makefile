@@ -6,7 +6,7 @@ OUTPUT_BIN := $(OUTPUT_DIR)/$(BINARY_NAME)
 HOST_SPAWN := $(shell command -v host-spawn 2>/dev/null)
 RUN_CMD := $(if $(HOST_SPAWN),$(HOST_SPAWN) bash -c,bash -c)
 
-.PHONY: all build build-frontend test test-go test-frontend clean
+.PHONY: all build build-frontend test test-go test-frontend clean package-linux package-deb package-appimage package-tar
 
 all: build
 
@@ -20,6 +20,14 @@ build: build-frontend
 	@$(RUN_CMD) 'export PATH="$$HOME/.local/bin:$$HOME/.local/go/bin:$$PATH"; cd "$$(pwd)"; go build -tags "gtk3 croc_no_tailcat" -ldflags="-s -w" -o $(OUTPUT_BIN) .'
 	@echo "==> Build successful: $(OUTPUT_BIN) ($$(ls -lh $(OUTPUT_BIN) | awk '{print $$5}'))"
 
+package-linux: build
+	@echo "==> Generating Linux distribution packages..."
+	@./scripts/package-linux.sh
+
+package-deb: package-linux
+package-appimage: package-linux
+package-tar: package-linux
+
 test: test-go test-frontend
 
 test-go:
@@ -32,4 +40,4 @@ test-frontend:
 
 clean:
 	@echo "==> Cleaning build artifacts..."
-	@rm -rf $(OUTPUT_DIR) frontend/dist
+	@rm -rf $(OUTPUT_DIR) build/dist build/tmp_* frontend/dist

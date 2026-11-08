@@ -1,0 +1,21 @@
+{
+  "name": "croc-mobile-shell",
+  "version": "1.0.0",
+  "description": "Mobile application shell for Croc UI on Android and iOS",
+  "scripts": {
+    "cap": "cap",
+    "sync": "cap sync",
+    "open:android": "cap open android",
+    "open:ios": "cap open ios",
+    "build:android": "cd android && ./gradlew assembleDebug",
+    "build:release": "cd android && ./gradlew assembleRelease"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/ios": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0"
+  }
+}

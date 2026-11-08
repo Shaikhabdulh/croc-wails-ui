@@ -12,9 +12,40 @@
 - 🚀 **1-Click Drag & Drop Send:** Drop any file or folder to instantly generate a secure code phrase and QR code.
 - 📥 **1-Click Auto Receive:** Paste a code phrase and download directly to your `~/Downloads` folder.
 - ⚡ **Local LAN Mode:** Toggle local network transfer for maximum throughput without routing through public relays.
-- 📊 **Real-Time Progress:** Live transfer progress, speed (MB/s), and ETA calculation.
-- 🔒 **End-to-End Encrypted:** Leverages croc's proven PAKE (Password Authenticated Key Exchange) and AES-GCM encryption in-process.
-- 🖥️ **Single Executable:** Compiles down to a standalone desktop binary powered by Wails v3 and React + Tailwind CSS.
+- 📊 **Real-Time Progress & Transparent Flow:** Live transfer progress, speed (MB/s), ETA calculation, and 3-node network topology visualizer.
+- 🔒 **End-to-End Encrypted:** Leverages croc's proven SPAKE2 Password Authenticated Key Exchange and ChaCha20-Poly1305 stream cipher.
+- 🌐 **Multi-Platform & Multi-Architecture:** Built for Linux (Debian, Ubuntu, Fedora, Arch, AppImage), Windows (x86_64, ARM64, 32-bit), macOS (Universal Apple Silicon + Intel), Android, and iOS.
+
+---
+
+## Supported Platforms & Architecture Matrix
+
+| Platform | Architectures | Formats / Packages | Installation / Run Method |
+| :--- | :--- | :--- | :--- |
+| **Linux (Debian/Ubuntu/Mint)** | `x86_64` (amd64), `aarch64` (arm64) | `.deb` package | `sudo apt install ./croc-wails-ui_1.0.0_amd64.deb` |
+| **Linux (Fedora/RHEL/openSUSE)**| `x86_64` (amd64), `aarch64` (arm64) | `.rpm` package | `sudo dnf install ./croc-wails-ui.x86_64.rpm` |
+| **Linux (Universal Portable)** | `x86_64` (amd64), `aarch64` (arm64) | `.AppImage` & `.tar.gz` | `chmod +x croc-wails-ui-*.AppImage && ./croc-wails-ui-*.AppImage` |
+| **Windows** | `x86_64` (amd64), `arm64`, `x86` (386)| Standalone `.exe` & Setup | Double-click `croc-wails-ui-x86_64.exe` |
+| **macOS** | Apple Silicon (`arm64`) & Intel (`x86_64`) | Universal `.dmg` & `.app` | Open `croc-wails-ui-Universal.dmg` and drag to Applications |
+| **Android** | `arm64-v8a`, `armeabi-v7a`, `x86_64` | `.apk` & `.aab` | Sideload APK or install via Google Play bundle |
+| **iOS** | `arm64` | `.ipa` / Xcode project | Install via TestFlight / Sideloading / Xcode |
+
+For detailed step-by-step installation instructions for every Linux distribution, Windows, macOS, and Mobile, see **[docs/INSTALL.md](docs/INSTALL.md)**.
+
+---
+
+## Packaging & Building
+
+```bash
+# 1. Compile standard standalone desktop binary
+make build
+
+# 2. Generate all Linux packages (.deb, .tar.gz, AppDir)
+make package-linux
+
+# 3. Run full backend, E2E hash verification, and Vitest test suites
+make test
+```
 
 ---
 

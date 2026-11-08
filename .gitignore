@@ -1,5 +1,7 @@
 # Binaries and build outputs
 build/bin/
+build/dist/
+build/tmp_*
 bin/
 dist/
 *.exe
