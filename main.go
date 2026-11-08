@@ -22,6 +22,45 @@ var assets embed.FS
 //go:embed build/appicon.png
 var appIcon []byte
 
+type wailsDialogProvider struct{}
+
+func (w *wailsDialogProvider) PickFiles() ([]string, error) {
+	app := application.Get()
+	if app == nil {
+		return []string{}, nil
+	}
+	dialog := app.Dialog.OpenFile()
+	dialog.CanChooseFiles(true).
+		CanChooseDirectories(false).
+		SetTitle("Select File(s) to Send")
+	return dialog.PromptForMultipleSelection()
+}
+
+func (w *wailsDialogProvider) PickFolder() (string, error) {
+	app := application.Get()
+	if app == nil {
+		return "", nil
+	}
+	dialog := app.Dialog.OpenFile()
+	dialog.CanChooseFiles(false).CanChooseDirectories(true).SetTitle("Select Folder to Send")
+	return dialog.PromptForSingleSelection()
+}
+
+func (w *wailsDialogProvider) PickDownloadDir(currentDir string) (string, error) {
+	app := application.Get()
+	if app == nil {
+		return currentDir, nil
+	}
+	dialog := app.Dialog.OpenFile()
+	dialog.SetTitle("Select Default Download Folder").
+		CanChooseDirectories(true).
+		CanChooseFiles(false)
+	if currentDir != "" {
+		dialog.SetDirectory(currentDir)
+	}
+	return dialog.PromptForSingleSelection()
+}
+
 const appName = "Croc Interface"
 
 func main() {
@@ -30,6 +69,7 @@ func main() {
 	flag.Parse()
 
 	appSvc := service.NewAppService()
+	appSvc.SetDialogProvider(&wailsDialogProvider{})
 
 	// Check environment variable as fallback
 	if *serverMode || os.Getenv("CROC_UI_MODE") == "server" {

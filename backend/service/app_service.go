@@ -19,6 +19,13 @@ import (
 	qrcode "github.com/skip2/go-qrcode"
 )
 
+// DialogProvider abstracts native OS file and folder chooser dialogs.
+type DialogProvider interface {
+	PickFiles() ([]string, error)
+	PickFolder() (string, error)
+	PickDownloadDir(currentDir string) (string, error)
+}
+
 // AppService bridges GUI actions to the underlying Croc transfer engine.
 type AppService struct {
 	mu       sync.Mutex
@@ -26,6 +33,14 @@ type AppService struct {
 	prefs    *PreferencesManager
 	relayMgr *EmbeddedRelayManager
 	emitter  func(event string, data any)
+	dialog   DialogProvider
+}
+
+// SetDialogProvider configures a native or mock dialog provider.
+func (s *AppService) SetDialogProvider(d DialogProvider) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.dialog = d
 }
 
 // NewAppService creates an initialized AppService.
@@ -80,12 +95,24 @@ func (s *AppService) PickFile() (string, error) {
 
 // PickFiles displays the native OS file picker allowing selection of multiple files.
 func (s *AppService) PickFiles() ([]string, error) {
-	return s.pickFilesNative()
+	s.mu.Lock()
+	d := s.dialog
+	s.mu.Unlock()
+	if d == nil {
+		return []string{}, nil
+	}
+	return d.PickFiles()
 }
 
 // PickFolder displays the native OS folder picker and returns the selected directory path.
 func (s *AppService) PickFolder() (string, error) {
-	return s.pickFolderNative()
+	s.mu.Lock()
+	d := s.dialog
+	s.mu.Unlock()
+	if d == nil {
+		return "", nil
+	}
+	return d.PickFolder()
 }
 
 // SavePastedImage saves base64-encoded image data from clipboard into a temporary file for sending.
@@ -332,7 +359,21 @@ func (s *AppService) ResetDownloadDir() (string, error) {
 
 // PickDownloadDir prompts the user with a native folder chooser dialog and saves the selection.
 func (s *AppService) PickDownloadDir() (string, error) {
-	return s.pickDownloadDirNative()
+	currentDir, _ := s.GetDownloadDir()
+	s.mu.Lock()
+	d := s.dialog
+	s.mu.Unlock()
+	if d == nil {
+		return currentDir, nil
+	}
+	selected, err := d.PickDownloadDir(currentDir)
+	if err != nil || selected == "" {
+		return currentDir, nil
+	}
+	if err := s.SetDownloadDir(selected); err != nil {
+		return currentDir, err
+	}
+	return selected, nil
 }
 
 // GetConfig retrieves the current user configuration for both FE and BE.
