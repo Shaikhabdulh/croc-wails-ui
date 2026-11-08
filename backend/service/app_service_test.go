@@ -46,3 +46,15 @@ func TestGenerateQRCode(t *testing.T) {
 		t.Fatalf("expected data URL for qr code, got %s", qr)
 	}
 }
+
+func TestPickFileWithoutApp(t *testing.T) {
+	svc := NewAppService()
+	// In headless unit test without running GUI app, PickFile safely returns empty string without crashing
+	path, err := svc.PickFile()
+	if err != nil {
+		t.Fatalf("unexpected error from PickFile: %v", err)
+	}
+	if path != "" {
+		t.Fatalf("expected empty path without app, got %s", path)
+	}
+}

@@ -1,8 +1,9 @@
-import { useState, useRef, DragEvent, ChangeEvent } from 'react';
+import { useState, DragEvent } from 'react';
 import { UploadCloud, Copy, Check, QrCode, XCircle, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { ProgressInfo, TransferState } from '../types/transfer';
 import { ProgressBar } from './ProgressBar';
 import { QRCodeModal } from './QRCodeModal';
+import { api } from '../api';
 
 interface SendViewProps {
   state: TransferState;
@@ -11,6 +12,7 @@ interface SendViewProps {
   qrCodeUrl: string;
   error?: string | null;
   onSend: (path: string) => Promise<string>;
+  onBrowse?: () => Promise<void>;
   onCancel: () => Promise<void>;
   onReset: () => void;
 }
@@ -22,13 +24,13 @@ export function SendView({
   qrCodeUrl,
   error,
   onSend,
+  onBrowse,
   onCancel,
   onReset,
 }: SendViewProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -39,22 +41,24 @@ export function SendView({
     setIsDragging(false);
   };
 
-  const handleDrop = async (e: DragEvent<HTMLDivElement>) => {
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const file = e.dataTransfer.files[0];
-      // In webview/desktop, file object may have path property
-      const filePath = (file as unknown as { path?: string }).path || file.name;
-      await onSend(filePath);
-    }
+    // Visual reset only; the native Wails window listener handles the OS absolute paths
   };
 
-  const handleFileInput = async (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      const filePath = (file as unknown as { path?: string }).path || file.name;
-      await onSend(filePath);
+  const handleBrowseClick = async () => {
+    try {
+      if (onBrowse) {
+        await onBrowse();
+      } else {
+        const path = await api.PickFile();
+        if (path) {
+          await onSend(path);
+        }
+      }
+    } catch {
+      // dialog cancelled
     }
   };
 
@@ -83,19 +87,13 @@ export function SendView({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
+          onClick={handleBrowseClick}
           className={`flex w-full max-w-md cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-10 text-center transition-all duration-200 ${
             isDragging
               ? 'border-indigo-500 bg-indigo-50/50 scale-[1.01]'
               : 'border-slate-300 bg-white hover:border-slate-400 hover:bg-slate-50/50'
           }`}
         >
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileInput}
-            className="hidden"
-          />
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 mb-4">
             <UploadCloud className="h-8 w-8" />
           </div>

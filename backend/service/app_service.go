@@ -15,6 +15,7 @@ import (
 	"github.com/schollz/croc/v11/src/croc"
 	"github.com/schollz/croc/v11/src/models"
 	qrcode "github.com/skip2/go-qrcode"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 // AppService bridges GUI actions to the underlying Croc transfer engine.
@@ -61,6 +62,17 @@ func (s *AppService) emitEvent(event string, data any) {
 	if fn != nil {
 		fn(event, data)
 	}
+}
+
+// PickFile displays the native OS file picker and returns the selected path.
+func (s *AppService) PickFile() (string, error) {
+	app := application.Get()
+	if app == nil {
+		return "", nil
+	}
+	dialog := app.Dialog.OpenFile()
+	dialog.CanChooseFiles(true).CanChooseDirectories(true).SetTitle("Select File or Folder to Send")
+	return dialog.PromptForSingleSelection()
 }
 
 // SendFile initiates an outbound file transfer and returns the generated code phrase.
@@ -140,7 +152,10 @@ func (s *AppService) ReceiveFile(codePhrase string, isLocalOnly bool) error {
 	client.SetHooks(s.tm.Hooks())
 	s.tm.SetClient(client)
 
-	oldWd, _ := os.Getwd()
+	oldWd, err := os.Getwd()
+	if err != nil {
+		oldWd = ""
+	}
 	if err := os.Chdir(downloadDir); err != nil {
 		s.tm.Reset()
 		return fmt.Errorf("failed to change directory to %s: %w", downloadDir, err)
@@ -150,7 +165,9 @@ func (s *AppService) ReceiveFile(codePhrase string, isLocalOnly bool) error {
 
 	go func() {
 		defer func() {
-			_ = os.Chdir(oldWd)
+			if oldWd != "" {
+				_ = os.Chdir(oldWd)
+			}
 		}()
 		receiveErr := client.Receive()
 		s.tm.Finish(receiveErr)

@@ -1,6 +1,7 @@
 import { Call, Events } from '@wailsio/runtime';
 
 export interface BackendService {
+  PickFile: () => Promise<string>;
   SendFile: (path: string, isLocalOnly?: boolean) => Promise<string>;
   ReceiveFile: (code: string, isLocalOnly?: boolean) => Promise<void>;
   CancelTransfer: () => Promise<void>;
@@ -8,47 +9,31 @@ export interface BackendService {
   GenerateQRCode: (code: string) => Promise<string>;
 }
 
+const SERVICE_FQN = 'croc-interface/backend/service.AppService';
+
 export const api: BackendService = {
+  PickFile: async (): Promise<string> => {
+    return (await Call.ByName(`${SERVICE_FQN}.PickFile`)) as string;
+  },
+
   SendFile: async (path: string, isLocalOnly: boolean = false): Promise<string> => {
-    try {
-      const res = await Call.ByName('main.AppService.SendFile', path, isLocalOnly);
-      return (res as string) || '7777-mock-code-phrase';
-    } catch {
-      return '7777-mock-code-phrase';
-    }
+    return (await Call.ByName(`${SERVICE_FQN}.SendFile`, path, isLocalOnly)) as string;
   },
 
   ReceiveFile: async (code: string, isLocalOnly: boolean = false): Promise<void> => {
-    try {
-      await Call.ByName('main.AppService.ReceiveFile', code, isLocalOnly);
-    } catch {
-      // Fallback for browser preview / test environment
-    }
+    await Call.ByName(`${SERVICE_FQN}.ReceiveFile`, code, isLocalOnly);
   },
 
   CancelTransfer: async (): Promise<void> => {
-    try {
-      await Call.ByName('main.AppService.CancelTransfer');
-    } catch {
-      // Fallback for browser preview / test environment
-    }
+    await Call.ByName(`${SERVICE_FQN}.CancelTransfer`);
   },
 
   OpenDownloadsFolder: async (filename: string = ''): Promise<void> => {
-    try {
-      await Call.ByName('main.AppService.OpenDownloadsFolder', filename);
-    } catch {
-      // Fallback for browser preview / test environment
-    }
+    await Call.ByName(`${SERVICE_FQN}.OpenDownloadsFolder`, filename);
   },
 
   GenerateQRCode: async (code: string): Promise<string> => {
-    try {
-      const res = await Call.ByName('main.AppService.GenerateQRCode', code);
-      return (res as string) || '';
-    } catch {
-      return '';
-    }
+    return (await Call.ByName(`${SERVICE_FQN}.GenerateQRCode`, code)) as string;
   },
 };
 

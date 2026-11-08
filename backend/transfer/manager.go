@@ -24,6 +24,8 @@ type TransferManager struct {
 	startTime time.Time
 	lastBytes int64
 	lastTime  time.Time
+	lastSpeed float64
+	lastEta   int
 
 	OnProgress    func(ProgressInfo)
 	OnStateChange func(string)
@@ -60,6 +62,8 @@ func (tm *TransferManager) TryStart(isSender bool) (context.Context, error) {
 	tm.startTime = time.Now()
 	tm.lastTime = tm.startTime
 	tm.lastBytes = 0
+	tm.lastSpeed = 0
+	tm.lastEta = 0
 
 	return tm.ctx, nil
 }
@@ -156,29 +160,32 @@ func (tm *TransferManager) Hooks() *croc.Hooks {
 			now := time.Now()
 			tm.mu.Lock()
 			elapsed := now.Sub(tm.lastTime).Seconds()
-			var speedMBs float64
 			if elapsed > 0.2 {
 				bytesDelta := p.BytesDone - tm.lastBytes
 				if bytesDelta > 0 {
-					speedMBs = (float64(bytesDelta) / (1024 * 1024)) / elapsed
+					tm.lastSpeed = (float64(bytesDelta) / (1024 * 1024)) / elapsed
 				}
 				tm.lastBytes = p.BytesDone
 				tm.lastTime = now
+
+				if tm.lastSpeed > 0.05 && p.BytesTotal > 0 {
+					remainingBytes := p.BytesTotal - p.BytesDone
+					if remainingBytes > 0 {
+						tm.lastEta = int(float64(remainingBytes) / (tm.lastSpeed * 1024 * 1024))
+					} else {
+						tm.lastEta = 0
+					}
+				}
 			}
+			speedMBs := tm.lastSpeed
+			eta := tm.lastEta
 			tm.mu.Unlock()
 
 			pct := float64(0)
-			eta := 0
 			if p.BytesTotal > 0 {
 				pct = (float64(p.BytesDone) / float64(p.BytesTotal)) * 100
 				if pct > 100 {
 					pct = 100
-				}
-				if speedMBs > 0.05 {
-					remainingBytes := p.BytesTotal - p.BytesDone
-					if remainingBytes > 0 {
-						eta = int(float64(remainingBytes) / (speedMBs * 1024 * 1024))
-					}
 				}
 			}
 
