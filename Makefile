@@ -15,16 +15,16 @@ build-frontend:
 	@cd frontend && bun install && bun run build
 
 build: build-frontend
-	@echo "==> Compiling standalone Wails v3 binary..."
+	@echo "==> Compiling optimized standalone Wails v3 binary..."
 	@mkdir -p $(OUTPUT_DIR)
-	@$(RUN_CMD) 'export PATH="$$HOME/.local/bin:$$HOME/.local/go/bin:$$PATH"; cd "$$(pwd)"; go build -tags gtk3 -o $(OUTPUT_BIN) .'
-	@echo "==> Build successful: $(OUTPUT_BIN)"
+	@$(RUN_CMD) 'export PATH="$$HOME/.local/bin:$$HOME/.local/go/bin:$$PATH"; cd "$$(pwd)"; go build -tags "gtk3 croc_no_tailcat" -ldflags="-s -w" -o $(OUTPUT_BIN) .'
+	@echo "==> Build successful: $(OUTPUT_BIN) ($$(ls -lh $(OUTPUT_BIN) | awk '{print $$5}'))"
 
 test: test-go test-frontend
 
 test-go:
 	@echo "==> Running Go unit and integration tests..."
-	@$(RUN_CMD) 'export PATH="$$HOME/.local/bin:$$HOME/.local/go/bin:$$PATH"; cd "$$(pwd)"; go test -tags gtk3 ./backend/... ./e2e . -v'
+	@$(RUN_CMD) 'export PATH="$$HOME/.local/bin:$$HOME/.local/go/bin:$$PATH"; cd "$$(pwd)"; go test -tags "gtk3 croc_no_tailcat" ./backend/... ./e2e . -v'
 
 test-frontend:
 	@echo "==> Running frontend Vitest suite..."
