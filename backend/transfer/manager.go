@@ -196,6 +196,8 @@ func (tm *TransferManager) Hooks() *croc.Hooks {
 				FileName:   p.Filename,
 				BytesDone:  p.BytesDone,
 				BytesTotal: p.BytesTotal,
+				FilesDone:  p.FilesDone,
+				FilesTotal: p.FilesTotal,
 			})
 		},
 		OnAcceptRequest: func(req croc.AcceptRequest) bool {

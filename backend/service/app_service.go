@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"croc-interface/backend/transfer"
 
@@ -66,15 +67,26 @@ func (s *AppService) emitEvent(event string, data any) {
 	}
 }
 
-// PickFile displays the native OS file picker and returns the selected file path.
+// PickFile displays the native OS file picker and returns a single selected file path.
 func (s *AppService) PickFile() (string, error) {
+	files, err := s.PickFiles()
+	if err != nil || len(files) == 0 {
+		return "", err
+	}
+	return files[0], nil
+}
+
+// PickFiles displays the native OS file picker allowing selection of multiple files.
+func (s *AppService) PickFiles() ([]string, error) {
 	app := application.Get()
 	if app == nil {
-		return "", nil
+		return []string{}, nil
 	}
 	dialog := app.Dialog.OpenFile()
-	dialog.CanChooseFiles(true).CanChooseDirectories(false).SetTitle("Select File to Send")
-	return dialog.PromptForSingleSelection()
+	dialog.CanChooseFiles(true).
+		CanChooseDirectories(false).
+		SetTitle("Select File(s) to Send")
+	return dialog.PromptForMultipleSelection()
 }
 
 // PickFolder displays the native OS folder picker and returns the selected directory path.
@@ -88,18 +100,53 @@ func (s *AppService) PickFolder() (string, error) {
 	return dialog.PromptForSingleSelection()
 }
 
-// SendFile initiates an outbound file transfer and returns the generated code phrase.
-func (s *AppService) SendFile(filePath string, isLocalOnly bool) (string, error) {
-	filePath = strings.TrimSpace(filePath)
-	if filePath == "" {
-		return "", errors.New("file path cannot be empty")
+// SavePastedImage saves base64-encoded image data from clipboard into a temporary file for sending.
+func (s *AppService) SavePastedImage(filename string, base64Data string) (string, error) {
+	if strings.TrimSpace(filename) == "" {
+		filename = fmt.Sprintf("pasted_image_%d.png", time.Now().UnixNano()/1e6)
+	}
+	// Strip optional data URL prefix like "data:image/png;base64,"
+	if idx := strings.Index(base64Data, ","); idx != -1 {
+		base64Data = base64Data[idx+1:]
+	}
+	rawBytes, err := base64.StdEncoding.DecodeString(strings.TrimSpace(base64Data))
+	if err != nil {
+		return "", fmt.Errorf("invalid base64 image data: %w", err)
 	}
 
-	fileInfo, err := os.Stat(filePath)
-	if err != nil {
-		return "", fmt.Errorf("file not found: %w", err)
+	tmpDir := filepath.Join(os.TempDir(), "croc-pasted-files")
+	if err := os.MkdirAll(tmpDir, 0o755); err != nil {
+		tmpDir = os.TempDir()
 	}
-	_ = fileInfo
+	targetPath := filepath.Join(tmpDir, filename)
+	if err := os.WriteFile(targetPath, rawBytes, 0o644); err != nil {
+		return "", fmt.Errorf("failed to save pasted image to disk: %w", err)
+	}
+
+	return targetPath, nil
+}
+
+// SendFiles initiates an outbound transfer for one or more files/folders.
+func (s *AppService) SendFiles(filePaths []string, isLocalOnly bool) (string, error) {
+	if len(filePaths) == 0 {
+		return "", errors.New("no files selected to send")
+	}
+
+	var validPaths []string
+	for _, p := range filePaths {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		if _, err := os.Stat(p); err != nil {
+			return "", fmt.Errorf("file or folder not found: %s (%w)", p, err)
+		}
+		validPaths = append(validPaths, p)
+	}
+
+	if len(validPaths) == 0 {
+		return "", errors.New("no valid files or folders to send")
+	}
 
 	ctx, err := s.tm.TryStart(true)
 	if err != nil {
@@ -122,7 +169,7 @@ func (s *AppService) SendFile(filePath string, isLocalOnly bool) (string, error)
 	client.SetHooks(s.tm.Hooks())
 	s.tm.SetClient(client)
 
-	filesInfo, emptyFolders, totalFolders, err := croc.GetFilesInfoContext(ctx, []string{filePath}, false, false, nil)
+	filesInfo, emptyFolders, totalFolders, err := croc.GetFilesInfoContext(ctx, validPaths, false, false, nil)
 	if err != nil {
 		s.tm.Reset()
 		return "", fmt.Errorf("failed to gather file information: %w", err)
@@ -136,6 +183,11 @@ func (s *AppService) SendFile(filePath string, isLocalOnly bool) (string, error)
 	}()
 
 	return code, nil
+}
+
+// SendFile initiates an outbound file transfer and returns the generated code phrase.
+func (s *AppService) SendFile(filePath string, isLocalOnly bool) (string, error) {
+	return s.SendFiles([]string{filePath}, isLocalOnly)
 }
 
 // ReceiveFile connects to a sender using codePhrase and receives the transfer into the configured download directory.

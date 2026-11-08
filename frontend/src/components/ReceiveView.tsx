@@ -137,6 +137,8 @@ export function ReceiveView({
             fileName={progress.fileName}
             bytesDone={progress.bytesDone}
             bytesTotal={progress.bytesTotal}
+            filesDone={progress.filesDone}
+            filesTotal={progress.filesTotal}
           />
           <button
             onClick={onCancel}

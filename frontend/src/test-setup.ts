@@ -7,8 +7,17 @@ vi.mock('@wailsio/runtime', () => ({
       if (methodName.endsWith('.SendFile')) {
         return Promise.resolve('7777-mock-code-phrase');
       }
+      if (methodName.endsWith('.SendFiles')) {
+        return Promise.resolve('7777-mock-code-phrase');
+      }
       if (methodName.endsWith('.PickFile')) {
         return Promise.resolve('/mock/path/file.txt');
+      }
+      if (methodName.endsWith('.PickFiles')) {
+        return Promise.resolve(['/mock/path/file1.txt', '/mock/path/file2.txt']);
+      }
+      if (methodName.endsWith('.SavePastedImage')) {
+        return Promise.resolve('/tmp/croc-pasted-files/pasted_image.png');
       }
       if (methodName.endsWith('.PickFolder')) {
         return Promise.resolve('/mock/path/folder');

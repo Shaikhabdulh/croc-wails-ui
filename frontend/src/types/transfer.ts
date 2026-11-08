@@ -15,6 +15,8 @@ export interface ProgressInfo {
   fileName: string;
   bytesDone: number;
   bytesTotal: number;
+  filesDone?: number;
+  filesTotal?: number;
 }
 
 export interface TransferHookState {
@@ -23,7 +25,7 @@ export interface TransferHookState {
   codePhrase: string;
   qrCodeUrl: string;
   error: string | null;
-  send: (path: string, isLocalOnly?: boolean) => Promise<string>;
+  send: (pathOrPaths: string | string[], isLocalOnly?: boolean) => Promise<string>;
   receive: (codePhrase: string, isLocalOnly?: boolean) => Promise<void>;
   cancel: () => Promise<void>;
   openFolder: (fileName?: string) => Promise<void>;

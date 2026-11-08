@@ -11,8 +11,11 @@ export interface UserConfig {
 
 export interface BackendService {
   PickFile: () => Promise<string>;
+  PickFiles: () => Promise<string[]>;
   PickFolder: () => Promise<string>;
   SendFile: (path: string, isLocalOnly?: boolean) => Promise<string>;
+  SendFiles: (paths: string[], isLocalOnly?: boolean) => Promise<string>;
+  SavePastedImage: (filename: string, base64Data: string) => Promise<string>;
   ReceiveFile: (code: string, isLocalOnly?: boolean) => Promise<void>;
   CancelTransfer: () => Promise<void>;
   OpenDownloadsFolder: (filename?: string) => Promise<void>;
@@ -33,12 +36,25 @@ export const api: BackendService = {
     return (await Call.ByName(`${SERVICE_FQN}.PickFile`)) as string;
   },
 
+  PickFiles: async (): Promise<string[]> => {
+    const res = (await Call.ByName(`${SERVICE_FQN}.PickFiles`)) as string[];
+    return res || [];
+  },
+
   PickFolder: async (): Promise<string> => {
     return (await Call.ByName(`${SERVICE_FQN}.PickFolder`)) as string;
   },
 
   SendFile: async (path: string, isLocalOnly: boolean = false): Promise<string> => {
     return (await Call.ByName(`${SERVICE_FQN}.SendFile`, path, isLocalOnly)) as string;
+  },
+
+  SendFiles: async (paths: string[], isLocalOnly: boolean = false): Promise<string> => {
+    return (await Call.ByName(`${SERVICE_FQN}.SendFiles`, paths, isLocalOnly)) as string;
+  },
+
+  SavePastedImage: async (filename: string, base64Data: string): Promise<string> => {
+    return (await Call.ByName(`${SERVICE_FQN}.SavePastedImage`, filename, base64Data)) as string;
   },
 
   ReceiveFile: async (code: string, isLocalOnly: boolean = false): Promise<void> => {

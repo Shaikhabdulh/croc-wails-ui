@@ -58,15 +58,15 @@ export default function App() {
     const unsub = subscribeToEvent<string[]>('files:dropped', (paths) => {
       if (paths && paths.length > 0 && !isTransferActive) {
         setActiveTab('send');
-        send(paths[0], config.only_local).catch(() => {});
+        send(paths, config.only_local).catch(() => {});
       }
     });
 
     return () => unsub();
   }, [isTransferActive, config.only_local, send]);
 
-  const handleSend = async (path: string): Promise<string> => {
-    return await send(path, config.only_local);
+  const handleSend = async (pathOrPaths: string | string[]): Promise<string> => {
+    return await send(pathOrPaths, config.only_local);
   };
 
   const handleReceive = async (code: string): Promise<void> => {

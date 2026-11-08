@@ -7,6 +7,8 @@ interface ProgressBarProps {
   fileName: string;
   bytesDone: number;
   bytesTotal: number;
+  filesDone?: number;
+  filesTotal?: number;
 }
 
 export function ProgressBar({
@@ -16,11 +18,24 @@ export function ProgressBar({
   fileName,
   bytesDone,
   bytesTotal,
+  filesDone,
+  filesTotal,
 }: ProgressBarProps) {
   const roundedPct = Math.min(100, Math.max(0, Math.round(percentage)));
 
   return (
     <div className="w-full space-y-2.5">
+      {filesTotal && filesTotal > 1 ? (
+        <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">
+            Queue Item {Math.min(filesTotal, (filesDone || 0) + 1)} of {filesTotal}
+          </span>
+          <span className="tabular-nums">
+            {filesDone || 0} of {filesTotal} completed
+          </span>
+        </div>
+      ) : null}
+
       <div className="flex items-center justify-between text-sm font-medium text-slate-700">
         <span className="truncate max-w-[240px] font-semibold text-slate-900" title={fileName}>
           {fileName || 'Transferring...'}

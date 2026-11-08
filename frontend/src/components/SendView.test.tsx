@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { SendView } from './SendView';
 
 describe('SendView Component', () => {
@@ -67,7 +67,7 @@ describe('SendView Component', () => {
     render(
       <SendView
         state="transferring"
-        progress={{ percentage: 65, speedMBs: 14.2, etaSeconds: 8, fileName: 'archive.tar.gz', bytesDone: 6500, bytesTotal: 10000 }}
+        progress={{ percentage: 65, speedMBs: 14.2, etaSeconds: 8, fileName: 'archive.tar.gz', bytesDone: 6500, bytesTotal: 10000, filesDone: 2, filesTotal: 5 }}
         codePhrase="7777-test-code"
         qrCodeUrl=""
         onSend={vi.fn()}
@@ -78,5 +78,68 @@ describe('SendView Component', () => {
     expect(screen.getByText(/archive\.tar\.gz/i)).toBeInTheDocument();
     expect(screen.getByText(/65%/i)).toBeInTheDocument();
     expect(screen.getByText(/14\.2 MB\/s/i)).toBeInTheDocument();
+    expect(screen.getByText(/Queue Item 3 of 5/i)).toBeInTheDocument();
+    expect(screen.getByText(/2 of 5 completed/i)).toBeInTheDocument();
+  });
+
+  it('stages multiple files and sends them as a batch', async () => {
+    const onSend = vi.fn().mockResolvedValue('7777-multi-code');
+    render(
+      <SendView
+        state="idle"
+        progress={{ percentage: 0, speedMBs: 0, etaSeconds: 0, fileName: '', bytesDone: 0, bytesTotal: 0 }}
+        codePhrase=""
+        qrCodeUrl=""
+        onSend={onSend}
+        onCancel={vi.fn()}
+        onReset={vi.fn()}
+      />
+    );
+
+    const fileBtn = screen.getByRole('button', { name: /choose files/i });
+    fireEvent.click(fileBtn);
+
+    // Mock returns ['/mock/path/file1.txt', '/mock/path/file2.txt']
+    expect(await screen.findByText('Queue to Send')).toBeInTheDocument();
+    expect(screen.getByText('file1.txt')).toBeInTheDocument();
+    expect(screen.getByText('file2.txt')).toBeInTheDocument();
+
+    const sendQueueBtn = screen.getByRole('button', { name: /send 2 items/i });
+    fireEvent.click(sendQueueBtn);
+
+    expect(onSend).toHaveBeenCalledWith(['/mock/path/file1.txt', '/mock/path/file2.txt']);
+  });
+
+  it('handles clipboard image paste', async () => {
+    render(
+      <SendView
+        state="idle"
+        progress={{ percentage: 0, speedMBs: 0, etaSeconds: 0, fileName: '', bytesDone: 0, bytesTotal: 0 }}
+        codePhrase=""
+        qrCodeUrl=""
+        onSend={vi.fn()}
+        onCancel={vi.fn()}
+        onReset={vi.fn()}
+      />
+    );
+
+    // Simulate paste event with image item
+    const mockFile = new File(['mock content'], 'clipboard_sample.png', { type: 'image/png' });
+    const pasteEvent = new Event('paste') as any;
+    pasteEvent.clipboardData = {
+      items: [
+        {
+          type: 'image/png',
+          getAsFile: () => mockFile,
+        },
+      ],
+    };
+
+    await act(async () => {
+      window.dispatchEvent(pasteEvent);
+    });
+
+    // After FileReader reads and saves, item appears in queue
+    expect(await screen.findByText(/pasted_image/i)).toBeInTheDocument();
   });
 });

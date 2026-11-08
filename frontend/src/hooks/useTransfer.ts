@@ -47,11 +47,20 @@ export function useTransfer(): TransferHookState {
     };
   }, []);
 
-  const send = useCallback(async (path: string, isLocalOnly: boolean = false): Promise<string> => {
+  const send = useCallback(async (pathOrPaths: string | string[], isLocalOnly: boolean = false): Promise<string> => {
     try {
       setError(null);
       setState('preparing');
-      const code = await api.SendFile(path, isLocalOnly);
+      let code: string;
+      if (Array.isArray(pathOrPaths)) {
+        if (pathOrPaths.length === 1) {
+          code = await api.SendFile(pathOrPaths[0], isLocalOnly);
+        } else {
+          code = await api.SendFiles(pathOrPaths, isLocalOnly);
+        }
+      } else {
+        code = await api.SendFile(pathOrPaths, isLocalOnly);
+      }
       setCodePhrase(code);
 
       try {

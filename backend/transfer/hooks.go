@@ -8,6 +8,8 @@ type ProgressInfo struct {
 	FileName   string  `json:"fileName"`
 	BytesDone  int64   `json:"bytesDone"`
 	BytesTotal int64   `json:"bytesTotal"`
+	FilesDone  int     `json:"filesDone"`
+	FilesTotal int     `json:"filesTotal"`
 }
 
 // State constants for transfer lifecycle.

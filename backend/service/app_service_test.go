@@ -1,6 +1,7 @@
 package service
 
 import (
+	"os"
 	"strings"
 	"testing"
 )
@@ -59,14 +60,56 @@ func TestPickFileWithoutApp(t *testing.T) {
 	}
 }
 
-func TestPickFolderWithoutApp(t *testing.T) {
+func TestPickFilesWithoutApp(t *testing.T) {
 	svc := NewAppService()
-	path, err := svc.PickFolder()
+	files, err := svc.PickFiles()
 	if err != nil {
-		t.Fatalf("unexpected error from PickFolder: %v", err)
+		t.Fatalf("unexpected error from PickFiles: %v", err)
 	}
-	if path != "" {
-		t.Fatalf("expected empty path without app, got %s", path)
+	if len(files) != 0 {
+		t.Fatalf("expected empty files slice without app, got %v", files)
+	}
+}
+
+func TestSavePastedImage(t *testing.T) {
+	svc := NewAppService()
+
+	// Base64 for 1x1 transparent PNG
+	pngBase64 := "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+	filePath, err := svc.SavePastedImage("test_pixel.png", pngBase64)
+	if err != nil {
+		t.Fatalf("failed to save pasted image: %v", err)
+	}
+	defer os.Remove(filePath)
+
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		t.Fatalf("failed to read saved image file: %v", err)
+	}
+	if len(content) == 0 {
+		t.Fatal("saved image file is empty")
+	}
+
+	// Invalid base64 should return error
+	_, err = svc.SavePastedImage("bad.png", "not-valid-base64!!!")
+	if err == nil {
+		t.Fatal("expected error on invalid base64 data")
+	}
+}
+
+func TestSendFilesValidation(t *testing.T) {
+	svc := NewAppService()
+
+	// Empty list should error
+	_, err := svc.SendFiles([]string{}, false)
+	if err == nil {
+		t.Fatal("expected error when sending empty file list")
+	}
+
+	// Non-existent path should error
+	_, err = svc.SendFiles([]string{"/non/existent/path/never_existed_xyz.123"}, false)
+	if err == nil {
+		t.Fatal("expected error on non-existent file path")
 	}
 }
 
