@@ -12,9 +12,11 @@ import {
   Wifi,
   Server,
   Globe,
+  QrCode,
 } from 'lucide-react';
 import { ProgressInfo, TransferState } from '../types/transfer';
 import { ProgressBar } from './ProgressBar';
+import { QRScannerModal } from './QRScannerModal';
 
 interface ReceiveViewProps {
   state: TransferState;
@@ -46,12 +48,21 @@ export function ReceiveView({
   onReset,
 }: ReceiveViewProps) {
   const [inputCode, setInputCode] = useState(codePhrase || '');
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const cleanCode = inputCode.trim();
     if (cleanCode.length >= 6) {
       await onReceive(cleanCode);
+    }
+  };
+
+  const handleScanCode = async (scanned: string) => {
+    const clean = scanned.trim();
+    setInputCode(clean);
+    if (clean.length >= 6) {
+      await onReceive(clean);
     }
   };
 
@@ -101,37 +112,57 @@ export function ReceiveView({
             )}
           </div>
 
-          <form onSubmit={handleSubmit} className="w-full space-y-4">
+          <form onSubmit={handleSubmit} className="w-full space-y-3.5">
             <div className="relative flex items-center">
               <KeyRound className="absolute left-3.5 h-4 w-4 text-slate-400 pointer-events-none" />
               <input
                 type="text"
                 value={inputCode}
                 onChange={(e) => setInputCode(e.target.value)}
-                placeholder="Paste code phrase (e.g. 7777-word-word)"
+                placeholder="Enter or paste code phrase (e.g. 7777-word-word)"
                 autoFocus
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 py-3.5 pl-10 pr-24 text-sm font-mono tracking-wide text-slate-900 placeholder:tracking-normal placeholder:font-sans placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 shadow-2xs transition"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 py-3.5 pl-10 pr-4 text-sm font-mono tracking-wide text-slate-900 placeholder:tracking-normal placeholder:font-sans placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 shadow-2xs transition"
               />
+            </div>
+
+            {/* Quick Action Buttons: Scan QR Code & Paste from Clipboard */}
+            <div className="grid grid-cols-2 gap-2 w-full">
+              <button
+                type="button"
+                onClick={() => setIsScannerOpen(true)}
+                className="flex items-center justify-center gap-2 rounded-xl border border-indigo-200/90 bg-indigo-50/70 py-2.5 px-3 text-xs font-semibold text-indigo-700 hover:bg-indigo-100/70 active:scale-[0.98] transition shadow-2xs"
+                title="Scan QR Code with camera"
+              >
+                <QrCode className="h-4 w-4 text-indigo-600 shrink-0" />
+                <span>Scan QR</span>
+              </button>
+
               <button
                 type="button"
                 onClick={handlePaste}
-                className="absolute right-2 flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 shadow-2xs transition"
+                className="flex items-center justify-center gap-2 rounded-xl border border-slate-200/90 bg-slate-50/70 py-2.5 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-100 active:scale-[0.98] transition shadow-2xs"
                 title="Paste from clipboard"
-                aria-label="Paste from clipboard"
               >
-                <ClipboardPaste className="h-3.5 w-3.5 text-indigo-500" />
-                <span className="hidden sm:inline">Paste</span>
+                <ClipboardPaste className="h-4 w-4 text-slate-500 shrink-0" />
+                <span>Paste Code</span>
               </button>
             </div>
 
             <button
               type="submit"
               disabled={inputCode.trim().length < 6}
-              className="w-full rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-700 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-600/15 hover:from-indigo-500 hover:to-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none active:scale-[0.99] transition"
+              className="w-full rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-700 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-600/15 hover:from-indigo-500 hover:to-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none active:scale-[0.99] transition mt-1"
             >
               Receive File
             </button>
           </form>
+
+          {/* QR Scanner Modal */}
+          <QRScannerModal
+            isOpen={isScannerOpen}
+            onClose={() => setIsScannerOpen(false)}
+            onScan={handleScanCode}
+          />
 
           {/* Destination Chip */}
           <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs text-slate-500 pt-1">

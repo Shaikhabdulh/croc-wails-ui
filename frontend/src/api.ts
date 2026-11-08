@@ -46,6 +46,23 @@ export interface BackendService {
 
 const SERVICE_FQN = 'croc-interface/backend/service.AppService';
 
+export const getApiBaseUrl = (): string => {
+  if (typeof window !== 'undefined') {
+    // If Capacitor or native mobile webview or file:// origin
+    const isMobileOrStatic = Boolean(
+      (window as any).Capacitor ||
+      window.location.protocol === 'capacitor:' ||
+      window.location.protocol === 'ionic:' ||
+      window.location.protocol === 'file:' ||
+      (window.location.hostname === 'localhost' && window.location.port !== '8080' && window.location.port !== '5173')
+    );
+    if (isMobileOrStatic) {
+      return 'http://127.0.0.1:8080';
+    }
+  }
+  return '';
+};
+
 async function callWailsOr<T>(
   wailsFn: () => Promise<T>,
   fallbackFn: () => Promise<T>
@@ -86,7 +103,7 @@ export const api: BackendService = {
     return callWailsOr(
       async () => (await Call.ByName(`${SERVICE_FQN}.SendFile`, path, isLocalOnly)) as string,
       async () => {
-        const res = await fetch('/api/send', {
+        const res = await fetch(`${getApiBaseUrl()}/api/send`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ paths: [path], local_only: isLocalOnly }),
@@ -101,7 +118,7 @@ export const api: BackendService = {
     return callWailsOr(
       async () => (await Call.ByName(`${SERVICE_FQN}.SendFiles`, paths, isLocalOnly)) as string,
       async () => {
-        const res = await fetch('/api/send', {
+        const res = await fetch(`${getApiBaseUrl()}/api/send`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ paths, local_only: isLocalOnly }),
@@ -132,7 +149,7 @@ export const api: BackendService = {
         await Call.ByName(`${SERVICE_FQN}.ReceiveFile`, code, isLocalOnly);
       },
       async () => {
-        await fetch('/api/receive', {
+        await fetch(`${getApiBaseUrl()}/api/receive`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code, local_only: isLocalOnly }),
@@ -147,7 +164,7 @@ export const api: BackendService = {
         await Call.ByName(`${SERVICE_FQN}.CancelTransfer`);
       },
       async () => {
-        await fetch('/api/cancel', { method: 'POST' });
+        await fetch(`${getApiBaseUrl()}/api/cancel`, { method: 'POST' });
       }
     );
   },
@@ -165,7 +182,7 @@ export const api: BackendService = {
     return callWailsOr(
       async () => (await Call.ByName(`${SERVICE_FQN}.GenerateQRCode`, code)) as string,
       async () => {
-        const res = await fetch(`/api/qr?code=${encodeURIComponent(code)}`);
+        const res = await fetch(`${getApiBaseUrl()}/api/qr?code=${encodeURIComponent(code)}`);
         const data = await res.json();
         return data.qr;
       }
@@ -212,7 +229,7 @@ export const api: BackendService = {
     return callWailsOr(
       async () => (await Call.ByName(`${SERVICE_FQN}.GetConfig`)) as UserConfig,
       async () => {
-        const res = await fetch('/api/config');
+        const res = await fetch(`${getApiBaseUrl()}/api/config`);
         return await res.json();
       }
     );
@@ -224,7 +241,7 @@ export const api: BackendService = {
         await Call.ByName(`${SERVICE_FQN}.UpdateConfig`, cfg);
       },
       async () => {
-        await fetch('/api/config', {
+        await fetch(`${getApiBaseUrl()}/api/config`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(cfg),
@@ -237,7 +254,7 @@ export const api: BackendService = {
     return callWailsOr(
       async () => (await Call.ByName(`${SERVICE_FQN}.ResetConfig`)) as UserConfig,
       async () => {
-        const res = await fetch('/api/config');
+        const res = await fetch(`${getApiBaseUrl()}/api/config`);
         return await res.json();
       }
     );
@@ -250,7 +267,7 @@ export const api: BackendService = {
       },
       async () => {
         try {
-          await fetch('/api/open-url', {
+          await fetch(`${getApiBaseUrl()}/api/open-url`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url }),
@@ -266,7 +283,7 @@ export const api: BackendService = {
     return callWailsOr(
       async () => (await Call.ByName(`${SERVICE_FQN}.StartEmbeddedRelay`, port, password)) as RelayStatus,
       async () => {
-        const res = await fetch('/api/relay/start', {
+        const res = await fetch(`${getApiBaseUrl()}/api/relay/start`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ port, password }),
@@ -280,7 +297,7 @@ export const api: BackendService = {
     return callWailsOr(
       async () => (await Call.ByName(`${SERVICE_FQN}.StopEmbeddedRelay`)) as RelayStatus,
       async () => {
-        const res = await fetch('/api/relay/stop', { method: 'POST' });
+        const res = await fetch(`${getApiBaseUrl()}/api/relay/stop`, { method: 'POST' });
         return await res.json();
       }
     );
@@ -290,7 +307,7 @@ export const api: BackendService = {
     return callWailsOr(
       async () => (await Call.ByName(`${SERVICE_FQN}.GetEmbeddedRelayStatus`)) as RelayStatus,
       async () => {
-        const res = await fetch('/api/relay/status');
+        const res = await fetch(`${getApiBaseUrl()}/api/relay/status`);
         return await res.json();
       }
     );
@@ -317,7 +334,7 @@ export const subscribeToEvent = <T>(
   // Fallback for Mobile / Browser via SSE
   if (typeof window !== 'undefined' && 'EventSource' in window) {
     try {
-      const source = new EventSource('/api/events');
+      const source = new EventSource(`${getApiBaseUrl()}/api/events`);
       source.onmessage = (event) => {
         try {
           const parsed = JSON.parse(event.data);

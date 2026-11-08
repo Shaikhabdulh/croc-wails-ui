@@ -10,6 +10,21 @@ import (
 
 // GetDefaultDownloadDir returns the user's Downloads directory path.
 func GetDefaultDownloadDir() (string, error) {
+	if runtime.GOOS == "android" {
+		candidates := []string{
+			"/storage/emulated/0/Download",
+			"/sdcard/Download",
+		}
+		for _, dir := range candidates {
+			if info, err := os.Stat(dir); err == nil && info.IsDir() {
+				return dir, nil
+			}
+			if err := os.MkdirAll(dir, 0o755); err == nil {
+				return dir, nil
+			}
+		}
+	}
+
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("could not find user home directory: %w", err)
