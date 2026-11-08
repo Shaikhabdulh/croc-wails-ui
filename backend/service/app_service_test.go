@@ -4,6 +4,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestAppServiceValidation(t *testing.T) {
@@ -229,10 +230,16 @@ func TestAppServiceEmbeddedRelay(t *testing.T) {
 		t.Fatal("expected relay to initially be stopped")
 	}
 
-	ports := findConsecutiveTestPorts(t, 4)
-	controlPort := ports[0]
-
-	status, err = svc.StartEmbeddedRelay(controlPort, "testsecret123")
+	var controlPort string
+	for attempt := 0; attempt < 5; attempt++ {
+		ports := findConsecutiveTestPorts(t, 4)
+		controlPort = ports[0]
+		status, err = svc.StartEmbeddedRelay(controlPort, "testsecret123")
+		if err == nil {
+			break
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
 	if err != nil {
 		t.Fatalf("failed to start embedded relay: %v", err)
 	}

@@ -11,13 +11,13 @@ import (
 func findConsecutiveTestPorts(t *testing.T, count int) []string {
 	t.Helper()
 	for range 50 {
-		base := 27000 + rand.Intn(20000)
+		base := 32000 + rand.Intn(25000)
 		listeners := make([]net.Listener, 0, count)
 		ports := make([]string, 0, count)
 		ok := true
 		for i := 0; i < count; i++ {
 			p := strconv.Itoa(base + i)
-			l, err := net.Listen("tcp", net.JoinHostPort("127.0.0.1", p))
+			l, err := net.Listen("tcp", net.JoinHostPort("0.0.0.0", p))
 			if err != nil {
 				ok = false
 				break
@@ -29,6 +29,7 @@ func findConsecutiveTestPorts(t *testing.T, count int) []string {
 			_ = l.Close()
 		}
 		if ok {
+			time.Sleep(20 * time.Millisecond)
 			return ports
 		}
 	}
@@ -44,10 +45,17 @@ func TestEmbeddedRelayLifecycle(t *testing.T) {
 		t.Fatal("expected relay to not be running initially")
 	}
 
-	ports := findConsecutiveTestPorts(t, 4)
-	controlPort := ports[0]
-
-	err := manager.Start(controlPort, 3, "testpass123")
+	var controlPort string
+	var err error
+	for attempt := 0; attempt < 5; attempt++ {
+		ports := findConsecutiveTestPorts(t, 4)
+		controlPort = ports[0]
+		err = manager.Start(controlPort, 3, "testpass123")
+		if err == nil {
+			break
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
 	if err != nil {
 		t.Fatalf("failed to start embedded relay: %v", err)
 	}
