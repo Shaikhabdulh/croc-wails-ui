@@ -69,7 +69,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         if (daemonProcess != null) {
             try {
                 Log.i(TAG, "Stopping croc micro-daemon...");

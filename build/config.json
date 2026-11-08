@@ -1,6 +1,6 @@
 {
   "name": "croc-interface",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Minimalist Desktop GUI for Croc",
   "frontend": {
     "dir": "frontend",

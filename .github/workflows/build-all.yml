@@ -71,7 +71,7 @@ jobs:
           wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O /tmp/appimagetool
           chmod +x /tmp/appimagetool
           cd /tmp && ./appimagetool --appimage-extract && cd -
-          /tmp/squashfs-root/AppRun build/dist/croc-wails-ui.AppDir build/dist/croc-wails-ui-1.0.0-x86_64.AppImage || true
+          /tmp/squashfs-root/AppRun build/dist/croc-wails-ui.AppDir build/dist/croc-wails-ui-0.1.0-x86_64.AppImage || true
 
       - name: Upload Linux Artifacts
         uses: actions/upload-artifact@v4
@@ -220,7 +220,7 @@ jobs:
             <key>CFBundlePackageType</key>
             <string>APPL</string>
             <key>CFBundleShortVersionString</key>
-            <string>1.0.0</string>
+            <string>0.1.0</string>
             <key>LSMinimumSystemVersion</key>
             <string>10.15</string>
           </dict>

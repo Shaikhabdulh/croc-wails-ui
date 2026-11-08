@@ -1,6 +1,6 @@
 {
   "name": "croc-mobile-shell",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Mobile application shell for Croc UI on Android and iOS",
   "scripts": {
     "cap": "cap",
