@@ -38,6 +38,7 @@ export interface BackendService {
   GetConfig: () => Promise<UserConfig>;
   UpdateConfig: (cfg: UserConfig) => Promise<void>;
   ResetConfig: () => Promise<UserConfig>;
+  OpenURL: (url: string) => Promise<void>;
   StartEmbeddedRelay: (port: string, password: string) => Promise<RelayStatus>;
   StopEmbeddedRelay: () => Promise<RelayStatus>;
   GetEmbeddedRelayStatus: () => Promise<RelayStatus>;
@@ -238,6 +239,25 @@ export const api: BackendService = {
       async () => {
         const res = await fetch('/api/config');
         return await res.json();
+      }
+    );
+  },
+
+  OpenURL: async (url: string): Promise<void> => {
+    return callWailsOr(
+      async () => {
+        await Call.ByName(`${SERVICE_FQN}.OpenURL`, url);
+      },
+      async () => {
+        try {
+          await fetch('/api/open-url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url }),
+          });
+        } catch {
+          window.open(url, '_blank');
+        }
       }
     );
   },

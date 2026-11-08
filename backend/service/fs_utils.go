@@ -40,3 +40,18 @@ func OpenFolder(targetPath string) error {
 
 	return cmd.Start()
 }
+
+// OpenURL opens the specified URL in the system default browser.
+func OpenURL(targetURL string) error {
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "darwin":
+		cmd = exec.Command("open", targetURL)
+	case "windows":
+		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", targetURL)
+	default: // linux, etc.
+		cmd = exec.Command("xdg-open", targetURL)
+	}
+
+	return cmd.Start()
+}

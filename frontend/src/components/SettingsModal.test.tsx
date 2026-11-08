@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { SettingsModal } from './SettingsModal';
-import { UserConfig } from '../api';
+import { api, UserConfig } from '../api';
 
 const mockConfig: UserConfig = {
   download_dir: '/home/user/Downloads',
@@ -101,5 +101,43 @@ describe('SettingsModal - Embedded Relay Hosting', () => {
     });
 
     expect(writeTextMock).toHaveBeenCalledWith('192.168.1.50:9009');
+  });
+
+  it('renders creator credits tab with Zack Scholl info and external links', async () => {
+    const openURLSpy = vi.spyOn(api, 'OpenURL').mockResolvedValue(undefined);
+
+    render(
+      <SettingsModal
+        isOpen={true}
+        onClose={vi.fn()}
+        config={mockConfig}
+        onUpdateConfig={vi.fn()}
+        onPickFolder={vi.fn()}
+        onResetConfig={vi.fn()}
+      />
+    );
+
+    // Click on Credits tab
+    const creditsTabButton = screen.getByRole('button', { name: /credits & attribution/i });
+    expect(creditsTabButton).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(creditsTabButton);
+    });
+
+    // Check Zack Scholl info is displayed
+    expect(screen.getByText(/zack scholl, phd/i)).toBeInTheDocument();
+    expect(screen.getByText(/@schollz/i)).toBeInTheDocument();
+    expect(screen.getByText(/author & creator of croc/i)).toBeInTheDocument();
+
+    // Check LinkedIn button and click
+    const linkedinBtn = screen.getByRole('button', { name: /linkedin/i });
+    expect(linkedinBtn).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(linkedinBtn);
+    });
+
+    expect(openURLSpy).toHaveBeenCalledWith('https://www.linkedin.com/in/zack-scholl-phd-51856889');
   });
 });

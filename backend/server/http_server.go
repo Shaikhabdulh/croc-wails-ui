@@ -86,6 +86,7 @@ func (s *HTTPServer) routes() {
 	s.router.HandleFunc("/api/relay/status", s.handleRelayStatus)
 	s.router.HandleFunc("/api/relay/start", s.handleRelayStart)
 	s.router.HandleFunc("/api/relay/stop", s.handleRelayStop)
+	s.router.HandleFunc("/api/open-url", s.handleOpenURL)
 	s.router.HandleFunc("/api/events", s.handleSSE)
 
 	// Static assets handler for browser & webview
@@ -227,6 +228,23 @@ func (s *HTTPServer) handleRelayStop(w http.ResponseWriter, r *http.Request) {
 	status, _ := s.svc.StopEmbeddedRelay()
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(status)
+}
+
+func (s *HTTPServer) handleOpenURL(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req struct {
+		URL string `json:"url"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.URL == "" {
+		http.Error(w, "invalid request", http.StatusBadRequest)
+		return
+	}
+	_ = s.svc.OpenURL(req.URL)
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]bool{"ok": true})
 }
 
 func (s *HTTPServer) handleSSE(w http.ResponseWriter, r *http.Request) {

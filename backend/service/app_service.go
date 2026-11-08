@@ -324,6 +324,11 @@ func (s *AppService) OpenDownloadsFolder(filename string) error {
 	return OpenFolder(target)
 }
 
+// OpenURL opens the given external web address in the user's default browser.
+func (s *AppService) OpenURL(targetURL string) error {
+	return OpenURL(targetURL)
+}
+
 // GenerateQRCode encodes the given code phrase into a base64 PNG data URL.
 func (s *AppService) GenerateQRCode(code string) (string, error) {
 	png, err := qrcode.Encode(code, qrcode.Medium, 256)
