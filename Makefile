@@ -44,6 +44,9 @@ check-ci:
 check-ci-watch:
 	@./scripts/check-ci.sh --watch
 
+clean-ci:
+	@./scripts/clean-ci.sh
+
 clean:
 	@echo "==> Cleaning build artifacts..."
 	@rm -rf $(OUTPUT_DIR) build/dist build/tmp_* frontend/dist
