@@ -28,7 +28,7 @@ package-deb: package-linux
 package-appimage: package-linux
 package-tar: package-linux
 
-test: test-go test-frontend
+test: build-frontend test-go test-frontend
 
 test-go:
 	@echo "==> Running Go unit and integration tests..."

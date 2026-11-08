@@ -13,25 +13,25 @@ permissions:
 
 jobs:
   # -------------------------------------------------------------
-  # 1. LINUX (amd64 & arm64) - .deb, .AppImage, .tar.gz
+  # 1. LINUX (amd64 on x86_64 & arm64 on native ARM runner)
   # -------------------------------------------------------------
   build-linux:
     name: Linux (${{ matrix.arch }})
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - arch: amd64
-            goarch: amd64
+            os: ubuntu-22.04
           - arch: arm64
-            goarch: arm64
+            os: ubuntu-24.04-arm
     steps:
       - name: Checkout Source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: '1.23'
           cache: true
@@ -46,28 +46,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libwebkit2gtk-4.0-dev file
 
-      - name: Build Frontend
+      - name: Build Frontend Assets
         run: |
           cd frontend
           bun install --frozen-lockfile || bun install
           bun run build
 
-      - name: Compile Linux Binary (${{ matrix.arch }})
-        env:
-          GOOS: linux
-          GOARCH: ${{ matrix.goarch }}
+      - name: Compile Standalone Linux Binary (${{ matrix.arch }})
         run: |
           mkdir -p build/bin
-          if [ "${{ matrix.arch }}" = "amd64" ]; then
-            go build -tags "gtk3 croc_no_tailcat" -ldflags="-s -w" -o build/bin/croc-wails-ui .
-          else
-            # For cross-compiling ARM64 CGo
-            sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-            CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc go build -tags "gtk3 croc_no_tailcat" -ldflags="-s -w" -o build/bin/croc-wails-ui . || \
-            CGO_ENABLED=0 go build -ldflags="-s -w" -o build/bin/croc-wails-ui .
-          fi
+          go build -tags "gtk3 croc_no_tailcat" -ldflags="-s -w" -o build/bin/croc-wails-ui .
 
-      - name: Package Linux Artifacts
+      - name: Package Linux Distribution Artifacts (.deb, .tar.gz, AppDir)
         run: |
           chmod +x scripts/package-linux.sh
           ./scripts/package-linux.sh
@@ -108,10 +98,10 @@ jobs:
             suffix: x86
     steps:
       - name: Checkout Source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: '1.23'
           cache: true
@@ -121,7 +111,7 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Build Frontend
+      - name: Build Frontend Assets
         shell: bash
         run: |
           cd frontend
@@ -151,10 +141,10 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout Source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: '1.23'
           cache: true
@@ -164,25 +154,21 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Build Frontend
+      - name: Build Frontend Assets
         run: |
           cd frontend
           bun install
           bun run build
 
       - name: Compile macOS Apple Silicon (arm64)
-        env:
-          GOOS: darwin
-          GOARCH: arm64
         run: |
           mkdir -p build/dist/mac
+          CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 CC="clang -target arm64-apple-macos11.0 -isysroot $(xcrun --show-sdk-path)" \
           go build -tags "croc_no_tailcat" -ldflags="-s -w" -o build/dist/mac/croc-wails-ui-arm64 .
 
       - name: Compile macOS Intel (x86_64)
-        env:
-          GOOS: darwin
-          GOARCH: amd64
         run: |
+          CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 CC="clang -target x86_64-apple-macos10.15 -isysroot $(xcrun --show-sdk-path)" \
           go build -tags "croc_no_tailcat" -ldflags="-s -w" -o build/dist/mac/croc-wails-ui-amd64 .
 
       - name: Create Universal Binary & App Bundle
