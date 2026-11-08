@@ -97,6 +97,12 @@ func TestSavePastedImage(t *testing.T) {
 	}
 }
 
+func TestGetClipboardImage(t *testing.T) {
+	svc := NewAppService()
+	// Should execute gracefully without panic (returns path if image in clipboard, or error if empty)
+	_, _ = svc.GetClipboardImage()
+}
+
 func TestSendFilesValidation(t *testing.T) {
 	svc := NewAppService()
 

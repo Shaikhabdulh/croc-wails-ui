@@ -204,28 +204,6 @@ export function SettingsModal({
                   />
                 </button>
               </div>
-
-              {/* Auto-copy Code Toggle */}
-              <div className="flex items-center justify-between pt-2.5 border-t border-slate-200/60">
-                <span className="text-xs font-semibold text-slate-800">
-                  Auto-Copy Code Phrase
-                </span>
-                <button
-                  role="switch"
-                  aria-label="Auto-Copy Code Phrase"
-                  aria-checked={localCfg.auto_copy_code}
-                  onClick={() => handleToggle('auto_copy_code', !localCfg.auto_copy_code)}
-                  className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    localCfg.auto_copy_code ? 'bg-indigo-600' : 'bg-slate-200 hover:bg-slate-300'
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs transition duration-200 ease-in-out ${
-                      localCfg.auto_copy_code ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-              </div>
             </div>
           </div>
 

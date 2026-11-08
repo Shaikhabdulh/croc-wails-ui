@@ -46,12 +46,12 @@ export default function App() {
       .catch(() => {});
   }, []);
 
-  // Auto-copy code phrase to clipboard if enabled in settings
+  // Auto-copy code phrase to clipboard immediately when generated
   useEffect(() => {
-    if (codePhrase && state === 'waiting' && config.auto_copy_code) {
+    if (codePhrase && state === 'waiting') {
       navigator.clipboard?.writeText(codePhrase).catch(() => {});
     }
-  }, [codePhrase, state, config.auto_copy_code]);
+  }, [codePhrase, state]);
 
   useEffect(() => {
     // Listen for native OS file drops onto the window

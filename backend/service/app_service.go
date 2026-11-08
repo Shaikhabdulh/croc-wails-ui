@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -123,6 +124,50 @@ func (s *AppService) SavePastedImage(filename string, base64Data string) (string
 	targetPath := filepath.Join(tmpDir, filename)
 	if err := os.WriteFile(targetPath, rawBytes, 0o644); err != nil {
 		return "", fmt.Errorf("failed to save pasted image to disk: %w", err)
+	}
+
+	return targetPath, nil
+}
+
+// GetClipboardImage reads any image currently in the system clipboard and saves it to a temp file.
+func (s *AppService) GetClipboardImage() (string, error) {
+	var rawBytes []byte
+
+	// 1. Try Wayland wl-paste
+	if lp, err := exec.LookPath("wl-paste"); err == nil {
+		out, err := exec.Command(lp, "--type", "image/png").Output()
+		if err == nil && len(out) > 0 {
+			rawBytes = out
+		} else {
+			out, err := exec.Command(lp, "--type", "image/jpeg").Output()
+			if err == nil && len(out) > 0 {
+				rawBytes = out
+			}
+		}
+	}
+
+	// 2. Try X11 xclip if wl-paste didn't return image
+	if len(rawBytes) == 0 {
+		if xp, err := exec.LookPath("xclip"); err == nil {
+			out, err := exec.Command(xp, "-selection", "clipboard", "-t", "image/png", "-o").Output()
+			if err == nil && len(out) > 0 {
+				rawBytes = out
+			}
+		}
+	}
+
+	if len(rawBytes) == 0 {
+		return "", errors.New("no image found in system clipboard")
+	}
+
+	tmpDir := filepath.Join(os.TempDir(), "croc-pasted-files")
+	if err := os.MkdirAll(tmpDir, 0o755); err != nil {
+		tmpDir = os.TempDir()
+	}
+	filename := fmt.Sprintf("pasted_image_%d.png", time.Now().UnixNano()/1e6)
+	targetPath := filepath.Join(tmpDir, filename)
+	if err := os.WriteFile(targetPath, rawBytes, 0o644); err != nil {
+		return "", fmt.Errorf("failed to save clipboard image: %w", err)
 	}
 
 	return targetPath, nil

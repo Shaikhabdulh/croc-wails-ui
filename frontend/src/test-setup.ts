@@ -19,6 +19,9 @@ vi.mock('@wailsio/runtime', () => ({
       if (methodName.endsWith('.SavePastedImage')) {
         return Promise.resolve('/tmp/croc-pasted-files/pasted_image.png');
       }
+      if (methodName.endsWith('.GetClipboardImage')) {
+        return Promise.resolve('/tmp/croc-pasted-files/pasted_image.png');
+      }
       if (methodName.endsWith('.PickFolder')) {
         return Promise.resolve('/mock/path/folder');
       }

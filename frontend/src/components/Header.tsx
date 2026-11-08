@@ -1,4 +1,4 @@
-import { UploadCloud, Download, Settings, ShieldCheck, Wifi } from 'lucide-react';
+import { UploadCloud, Download, Settings, Wifi } from 'lucide-react';
 
 interface HeaderProps {
   activeTab: 'send' | 'receive';
@@ -19,9 +19,11 @@ export function Header({
     <header className="relative flex h-14 w-full items-center justify-between border-b border-slate-200/80 bg-white/95 px-5 backdrop-blur select-none shrink-0 z-30">
       {/* Brand & Identity */}
       <div className="flex items-center gap-2.5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white shadow-xs shadow-indigo-600/20">
-          <ShieldCheck className="h-4 w-4" />
-        </div>
+        <img
+          src="/croc-wails-ui-logo.svg"
+          alt="croc"
+          className="h-8 w-8 rounded-xl shadow-xs object-cover"
+        />
         <span className="font-extrabold text-slate-900 tracking-tight text-base leading-none">croc</span>
       </div>
 

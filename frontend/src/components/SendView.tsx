@@ -61,13 +61,16 @@ export function SendView({
     }
   }, [state]);
 
-  // Window-level Ctrl+V / Paste listener for images
+  // Window-level Ctrl+V / Paste and Keydown listener for images
   useEffect(() => {
     if (state !== 'idle') return;
 
     const handlePaste = async (e: ClipboardEvent) => {
       const items = e.clipboardData?.items;
-      if (!items || items.length === 0) return;
+      if (!items || items.length === 0) {
+        await handlePasteClipboardImage();
+        return;
+      }
 
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
@@ -94,12 +97,30 @@ export function SendView({
             }
           };
           reader.readAsDataURL(file);
+          return;
         }
+      }
+
+      await handlePasteClipboardImage();
+    };
+
+    const handleKeyDown = async (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'v' || e.key === 'V')) {
+        const target = e.target as HTMLElement | null;
+        if (target && ['INPUT', 'TEXTAREA'].includes(target.tagName)) {
+          return;
+        }
+        e.preventDefault();
+        await handlePasteClipboardImage();
       }
     };
 
     window.addEventListener('paste', handlePaste);
-    return () => window.removeEventListener('paste', handlePaste);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('paste', handlePaste);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [state]);
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
@@ -157,42 +178,52 @@ export function SendView({
 
   const handlePasteClipboardImage = async (e?: React.MouseEvent) => {
     e?.stopPropagation();
+    setIsPasting(true);
+    let staged = false;
+
+    // 1. Try browser navigator.clipboard.read if supported
     try {
       if (navigator.clipboard?.read) {
-        setIsPasting(true);
         const clipboardItems = await navigator.clipboard.read();
-        let foundImage = false;
         for (const item of clipboardItems) {
           const imageType = item.types.find((t) => t.startsWith('image/'));
           if (imageType) {
-            foundImage = true;
             const blob = await item.getType(imageType);
-            const reader = new FileReader();
-            reader.onload = async () => {
-              try {
-                const base64 = reader.result as string;
-                const ext = imageType.split('/')[1] || 'png';
-                const name = `pasted_image_${Date.now()}.${ext}`;
-                const savedPath = await api.SavePastedImage(name, base64);
-                if (savedPath) {
-                  setStagedFiles((prev) => [...prev, savedPath]);
-                }
-              } catch (err) {
-                console.error('Failed to save clipboard image:', err);
-              } finally {
-                setIsPasting(false);
-              }
-            };
-            reader.readAsDataURL(blob);
+            const base64 = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result as string);
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
+            const ext = imageType.split('/')[1] || 'png';
+            const name = `pasted_image_${Date.now()}.${ext}`;
+            const savedPath = await api.SavePastedImage(name, base64);
+            if (savedPath) {
+              setStagedFiles((prev) => Array.from(new Set([...prev, savedPath])));
+              staged = true;
+              break;
+            }
           }
-        }
-        if (!foundImage) {
-          setIsPasting(false);
         }
       }
     } catch {
-      setIsPasting(false);
+      // browser clipboard read denied or unsupported
     }
+
+    // 2. If browser clipboard didn't provide an image, fallback to OS native clipboard tools (wl-paste / xclip)
+    if (!staged) {
+      try {
+        const nativePath = await api.GetClipboardImage();
+        if (nativePath) {
+          setStagedFiles((prev) => Array.from(new Set([...prev, nativePath])));
+          staged = true;
+        }
+      } catch {
+        // no image found in OS clipboard
+      }
+    }
+
+    setIsPasting(false);
   };
 
   const handleRemoveStagedFile = (index: number) => {
@@ -300,9 +331,13 @@ export function SendView({
             </button>
           </div>
 
-          <p className="mt-4 text-[11px] text-slate-400">
-            Tip: You can also paste clipboard images directly with <kbd className="font-mono font-medium text-slate-500">Ctrl+V</kbd>
-          </p>
+          <button
+            type="button"
+            onClick={handlePasteClipboardImage}
+            className="mt-4 text-[11px] text-slate-400 hover:text-indigo-600 transition cursor-pointer"
+          >
+            Tip: You can also paste clipboard images directly with <kbd className="font-mono font-medium text-slate-500 hover:text-indigo-600">Ctrl+V</kbd>
+          </button>
         </div>
       )}
 
@@ -407,7 +442,7 @@ export function SendView({
 
       {/* 4. WAITING STATE - Share code phrase */}
       {state === 'waiting' && (
-        <div className="flex w-full max-w-md flex-col items-center space-y-6 rounded-3xl bg-white p-8 shadow-sm border border-slate-200/90 text-center">
+        <div className="flex w-full max-w-md flex-col items-center space-y-5 rounded-3xl bg-white p-7 shadow-sm border border-slate-200/90 text-center animate-in fade-in">
           <div className="space-y-1.5">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200/60">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -415,9 +450,25 @@ export function SendView({
             </span>
             <h3 className="text-xl font-bold tracking-tight text-slate-900 pt-1">Share this Code Phrase</h3>
             <p className="text-xs text-slate-500 max-w-xs mx-auto">
-              Give this phrase to the recipient to begin downloading
+              Scan the QR code or enter the phrase to begin downloading
             </p>
           </div>
+
+          {/* Inline High-Contrast QR Code */}
+          {qrCodeUrl && (
+            <div className="flex flex-col items-center gap-1.5 p-3 bg-slate-50/80 rounded-2xl border border-slate-200/80 shadow-2xs">
+              <img
+                src={qrCodeUrl}
+                alt={`QR code for ${codePhrase}`}
+                onClick={() => setShowQrModal(true)}
+                className="h-36 w-36 rounded-xl bg-white p-2 border border-slate-200 shadow-2xs cursor-pointer hover:scale-[1.02] transition"
+                title="Click to expand QR Code"
+              />
+              <span className="text-[11px] font-medium text-slate-500">
+                Scan with mobile or recipient device
+              </span>
+            </div>
+          )}
 
           {/* Code Phrase Token Box */}
           <div className="flex items-center gap-2 rounded-2xl bg-slate-50 p-2.5 border border-slate-200 w-full justify-between shadow-2xs">

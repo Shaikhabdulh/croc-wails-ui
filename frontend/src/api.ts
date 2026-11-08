@@ -26,6 +26,7 @@ export interface BackendService {
   SendFile: (path: string, isLocalOnly?: boolean) => Promise<string>;
   SendFiles: (paths: string[], isLocalOnly?: boolean) => Promise<string>;
   SavePastedImage: (filename: string, base64Data: string) => Promise<string>;
+  GetClipboardImage: () => Promise<string>;
   ReceiveFile: (code: string, isLocalOnly?: boolean) => Promise<void>;
   CancelTransfer: () => Promise<void>;
   OpenDownloadsFolder: (filename?: string) => Promise<void>;
@@ -68,6 +69,10 @@ export const api: BackendService = {
 
   SavePastedImage: async (filename: string, base64Data: string): Promise<string> => {
     return (await Call.ByName(`${SERVICE_FQN}.SavePastedImage`, filename, base64Data)) as string;
+  },
+
+  GetClipboardImage: async (): Promise<string> => {
+    return (await Call.ByName(`${SERVICE_FQN}.GetClipboardImage`)) as string;
   },
 
   ReceiveFile: async (code: string, isLocalOnly: boolean = false): Promise<void> => {
