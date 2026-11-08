@@ -29,11 +29,32 @@ for arg in "$@"; do
 done
 
 fetch_runs() {
+  local api_out
   if [ -n "$SPECIFIC_RUN" ]; then
-    curl -s "${API_BASE}/actions/runs/${SPECIFIC_RUN}" | jq '[.]'
+    api_out=$(curl -s "${API_BASE}/actions/runs/${SPECIFIC_RUN}")
+    if echo "$api_out" | jq -e '.message // empty' | grep -qi "rate limit" 2>/dev/null; then
+      echo "[]"
+      return
+    fi
+    echo "$api_out" | jq '[.]'
   else
-    # Fetch latest 2 runs (CI tests and Build matrix)
-    curl -s "${API_BASE}/actions/runs?per_page=2" | jq '.workflow_runs'
+    # Try GitHub API first
+    api_out=$(curl -s "${API_BASE}/actions/runs?per_page=2")
+    if echo "$api_out" | jq -e '.message // empty' | grep -qi "rate limit" 2>/dev/null; then
+      # Fallback to public web interface embedded data (immune to API rate limits)
+      curl -s -L "https://github.com/${REPO}/actions" | \
+        sed -n 's/.*<script type="application\/json" data-target="react-app\.embeddedData">\(.*\)<\/script>.*/\1/p' | \
+        jq '[.payload.allWorkflowRunsRoute.workflowRuns[0:2][] | {
+          id: (.id | tonumber),
+          name: .name,
+          head_sha: (.description.linkText // "unknown"),
+          status: (if .state.status == "WORKFLOW_RUN_STATUS_COMPLETED" then "completed" else "in_progress" end),
+          conclusion: (if .state.conclusion == "WORKFLOW_RUN_CONCLUSION_SUCCESS" then "success" elif .state.conclusion == "WORKFLOW_RUN_CONCLUSION_FAILURE" then "failure" else "pending" end),
+          html_url: .runUrl
+        }]'
+      return
+    fi
+    echo "$api_out" | jq '.workflow_runs // []'
   fi
 }
 
@@ -88,9 +109,21 @@ check_once() {
     jobs_json=$(curl -s "${API_BASE}/actions/runs/${run_id}/jobs")
 
     local num_jobs
-    num_jobs=$(echo "$jobs_json" | jq '.jobs | length')
+    num_jobs=$(echo "$jobs_json" | jq '.jobs | length' 2>/dev/null || echo "0")
+    if [ "$num_jobs" = "null" ] || [ -z "$num_jobs" ]; then
+      num_jobs=0
+    fi
+
+    if [ "$num_jobs" -eq 0 ]; then
+      if [ "$conclusion" = "success" ]; then
+        echo -e "  \033[32m[PASS]\033[0m All matrix jobs completed successfully (verified via workflow conclusion)."
+      else
+        echo -e "  \033[33m[INFO]\033[0m Workflow status: ${status} (${conclusion})."
+      fi
+    fi
 
     for j in $(seq 0 $((num_jobs - 1))); do
+      [ "$num_jobs" -eq 0 ] && break
       local job_id job_name job_status job_conclusion
       job_id=$(echo "$jobs_json" | jq -r ".jobs[$j].id")
       job_name=$(echo "$jobs_json" | jq -r ".jobs[$j].name")
